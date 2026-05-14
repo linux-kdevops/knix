@@ -723,6 +723,34 @@ nixos-flake.storage = {
 `mkfsArgs` and `autoFormat` are mutually exclusive; an assertion
 rejects configurations that set both.
 
+## Controller host
+
+A controller host provisions and drives guests rather than being
+one. Compose the `controller` module on top of a disk-booted
+backend and enable it:
+
+```nix
+modules = [
+  nixos-flake.nixosModules.backends.libvirt
+  nixos-flake.nixosModules.profiles.controller
+  nixos-flake.nixosModules.user
+  { nixos-flake.controller.enable = true; }
+];
+```
+
+This adds the kernel and Kconfig build toolchain, Ansible, git,
+the QEMU and virtiofs tooling, and system libvirt with KVM. The
+libvirt backend's bundled `user.nix` places the unprivileged
+account in the `libvirtd` and `kvm` groups by default so it can
+drive libvirt without sudo.
+
+To run a workload on the controller itself instead of in a guest
+— the baremetal case — also import the matching `testSuites.*`
+module. The imageless closure activates on real hardware with
+`<closure>/bin/switch-to-configuration switch`; a baremetal host
+overrides the imageless `fileSystems` and `boot` options for its
+own root device and kernel.
+
 ## Multiple configurations
 
 Each configuration in `configurations/` is fully independent.

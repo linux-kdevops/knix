@@ -1,22 +1,25 @@
 # nixos-flake
 
 NixOS modules, overlays, and templates for provisioning NixOS
-systems. The flake exposes two backend modules that differ in the
-artifact each produces and in how the system boots:
+systems. The same module set drives several modes:
 
-- **imageless**: a system closure that boots a VM directly — tmpfs
-  root, systemd initramfs, external kernel, `/nix/store` and
+- **imageless guest**: a system closure that boots a VM directly —
+  tmpfs root, systemd initramfs, external kernel, `/nix/store` and
   `/lib/modules` mounted via virtiofs from the host. No disk image
   and nothing persists across boots.
-- **libvirt**: a qcow2 disk image consumed by libvirt — `/dev/vda`
-  root, grub bootloader, NixOS-built kernel, DHCP from libvirt's
-  default network.
+- **libvirt guest**: a qcow2 disk image consumed by libvirt —
+  `/dev/vda` root, grub bootloader, NixOS-built kernel, DHCP from
+  libvirt's default network.
+- **baremetal**: the imageless system activated on real hardware
+  with `switch-to-configuration` instead of booted in QEMU.
+- **controller**: a host that builds kernels, runs Kconfig and
+  Ansible, and provisions the guests above.
 
-Both compose with the opt-in modules — `user`, the mounts modules
-(`shares`, `storage`), the profiles (`devel`, `build-tools`,
-`monitoring`), and the per-suite modules under `testSuites.*` —
-so a system can be minimal or carry the full kernel and storage
-testing toolchain.
+All modes compose with the opt-in modules — `user`, the mounts
+modules (`shares`, `storage`), the profiles (`devel`,
+`build-tools`, `monitoring`, `controller`), and the per-suite
+modules under `testSuites.*` — so a system can be minimal or
+carry the full kernel and storage testing toolchain.
 
 **License**: copyleft-next-0.3.1
 
@@ -104,6 +107,41 @@ the MBR loads the kernel, initramfs mounts the ext4 root from
 `/dev/vda1`, and systemd activation proceeds normally. Networking
 comes up via DHCP from libvirt's default network (typically
 `192.168.122.0/24`).
+
+## Baremetal
+
+The imageless backend builds a NixOS system closure. A VM is one
+way to run it; a real machine is another. Activate the closure on
+baremetal with the closure's own switch script — no QEMU, no VM:
+
+```shell
+<closure>/bin/switch-to-configuration switch
+```
+
+The host then runs the same NixOS system the imageless backend
+builds. A baremetal host supplies its own root filesystem and
+kernel, so it overrides the `fileSystems` and `boot` entries the
+imageless module declares for the virtiofs case.
+
+## Controller
+
+The `profiles.controller` module turns a NixOS host into a control node:
+the toolchain to build a kernel and drive `make menuconfig`,
+Ansible and its Python runtime, git, the QEMU and virtiofs
+tooling, and system libvirt with the QEMU/KVM stack. Enable it on
+top of a backend on a real machine:
+
+```nix
+modules = [
+  nixos-flake.nixosModules.backends.libvirt
+  nixos-flake.nixosModules.profiles.controller
+  { nixos-flake.controller.enable = true; }
+];
+```
+
+The same host can also import a test-suite module and run the
+suite itself — the baremetal case above, driven from the
+controller.
 
 ## Documentation
 

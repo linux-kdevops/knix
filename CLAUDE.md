@@ -8,11 +8,15 @@ artifact each produces: `backends.imageless` (a system closure
 that boots a VM directly — tmpfs root, systemd initramfs,
 external kernel, `/nix/store` and `/lib/modules` via virtiofs)
 and `backends.libvirt` (a qcow2 disk image — `/dev/vda` root,
-grub, NixOS-built kernel). Opt-in modules — `user`, the mounts
+grub, NixOS-built kernel). The imageless closure also activates
+on real hardware with `switch-to-configuration` instead of QEMU
+— the baremetal case. Opt-in modules — `user`, the mounts
 modules (`mounts.shares`, `mounts.storage`), the profiles
-(`profiles.devel`, `profiles.build-tools`, `profiles.monitoring`),
-and the per-suite modules under `testSuites.*` — compose on top
-of either backend.
+(`profiles.devel`, `profiles.build-tools`, `profiles.monitoring`,
+`profiles.controller`), and the per-suite modules under
+`testSuites.*` — compose on top of a backend; the `controller`
+profile turns a host into a control node that builds kernels and
+provisions guests.
 
 **License**: copyleft-next-0.3.1
 
@@ -35,6 +39,7 @@ nixos-flake/
 │   │       └── user.nix     Libvirt extraGroups defaults for the unprivileged account
 │   ├── profiles/
 │   │   ├── build-tools.nix  Build toolchain (Autotools plus common headers)
+│   │   ├── controller.nix   Control-node profile: kernel build, Ansible, libvirt (options.nixos-flake.controller)
 │   │   ├── devel.nix        Development profile (kernel testing tools)
 │   │   └── monitoring.nix   Test-run-bracketed monitor units (options.nixos-flake.monitoring)
 │   ├── mounts/
@@ -137,6 +142,25 @@ copied by `nix flake init --template`. Each imports its matching
 backend plus `user`, `devel`, and `overlays.default`. Users add
 their own packages and NixOS options below.
 
+### Baremetal: activate, do not boot
+
+The imageless backend builds a `system.build.toplevel` closure.
+On real hardware the closure is activated with
+`<closure>/bin/switch-to-configuration switch` rather than booted
+in QEMU. There is no baremetal module: the difference from the VM
+case is how the closure is activated, not how it is built. A
+baremetal host overrides the `fileSystems` and `boot` options the
+imageless module declares for the virtiofs case.
+
+### Controller: gated profile, composes on a backend
+
+`profiles/controller.nix` is gated behind
+`nixos-flake.controller.enable` and composes on top of a
+disk-booted backend. It adds the kernel and Kconfig build
+toolchain, Ansible and its Python runtime, git, the QEMU and
+virtiofs tooling, and system libvirt with the QEMU/KVM stack
+(`runAsRoot` off, virtiofsd as a vhost-user backend).
+
 ### Per-backend unprivileged-account defaults
 
 `modules/user.nix` declares the unprivileged account and imports
@@ -175,14 +199,16 @@ Atomic commits. Spell fixes go in separate commits from code changes.
 ### Commit message format
 
 ```
-subsystem: brief description in imperative mood
+subsystem: brief description in imperative mood (max 50 chars)
 
-Plain English explanation of the change. NEVER use bullet points
-or itemized lists in commit messages. Stick to plain paragraphs.
+Plain English explanation of the change, 1-3 short paragraphs.
+NEVER use bullet points or itemized lists in commit messages.
 
 Generated-by: Claude AI
 Signed-off-by: Your Name <your.email@example.org>
 ```
+
+The subject line stays at or below 50 characters.
 
 ### Use Signed-off-by and Generated-by tags
 

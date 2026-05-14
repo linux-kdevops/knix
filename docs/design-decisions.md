@@ -352,3 +352,42 @@ an initial root password) on top when they need it. A standalone
 libvirt consumer with SSH keys injected does not get a weak
 password baked in.
 
+# Baremetal
+
+The imageless backend's `system.build.toplevel` is a complete
+NixOS system closure. Booting it in QEMU is one consumer; a real
+machine is another. `<closure>/bin/switch-to-configuration switch`
+activates the closure on the running host: it sets up `/etc`,
+users, and systemd units and reloads the service manager. With no
+bootloader enabled (`boot.loader.grub.enable = false`) the switch
+skips the bootloader step.
+
+The imageless module declares `fileSystems` for the virtiofs case
+(tmpfs root, `/nix/store` and `/lib/modules` over virtiofs). On
+baremetal those declarations do not match the real hardware, so a
+baremetal host overrides `fileSystems` and the `boot` options for
+its own root device and kernel. No separate module is needed: the
+difference between the VM and baremetal cases is how the closure
+is activated, not how it is built.
+
+# Controller
+
+A controller is a host that provisions and drives the systems
+above rather than being one of them. The `controller` module
+(`modules/profiles/controller.nix`) is a profile, gated behind
+`nixos-flake.controller.enable`, that adds three things to a host.
+
+The first is the toolchain to build a Linux kernel and drive its
+Kconfig interface: the menuconfig frontend's ncurses dependency
+plus the parser generators, libraries, and helpers a modern
+kernel tree's `make` invokes. The second is the orchestration
+layer: Ansible and the Python runtime its playbooks import, git,
+and the QEMU image and virtiofs tooling. The third is system
+libvirt with the QEMU/KVM stack, with `runAsRoot` off and
+virtiofsd registered as a vhost-user backend so guests share the
+host store without an elevated daemon.
+
+The module composes on top of a disk-booted backend — typically
+libvirt — on a real machine. A controller that also imports a
+test-suite module runs that suite itself, which is the baremetal
+case.
