@@ -44,31 +44,56 @@
         );
     in
     {
+      # The on-disk layout groups modules into nix-native buckets:
+      #
+      #   backends/   complete system shape (imageless, libvirt) —
+      #               import one and only one per nixosSystem
+      #   profiles/   additive feature sets (build-tools, controller,
+      #               devel, monitoring) on top of a backend
+      #   mounts/     fileSystems-emitting DSLs (shares, storage)
+      #   testSuites/ per-suite modules (fstests, blktests, …)
+      #
+      # The nixosModules attrset mirrors this layout so the import
+      # path matches the file path.
       nixosModules = {
         # The default aggregate matches the imageless template's
         # starter composition (imageless backend plus the opt-in
-        # workflow account). Consumers that prefer the libvirt backend
-        # or want bare modules import them by name.
+        # unprivileged account). Consumers that prefer the libvirt
+        # backend or want bare modules import them by name.
         default.imports = [
-          ./modules/imageless.nix
+          ./modules/backends/imageless
           ./modules/user.nix
         ];
-        build-tools = ./modules/build-tools.nix;
-        devel = ./modules/devel.nix;
-        imageless = ./modules/imageless.nix;
-        libvirt = ./modules/libvirt.nix;
-        monitoring = ./modules/monitoring.nix;
-        shares = ./modules/shares.nix;
-        storage = ./modules/storage.nix;
+
+        backends = {
+          imageless = ./modules/backends/imageless;
+          libvirt = ./modules/backends/libvirt;
+        };
+
+        profiles = {
+          build-tools = ./modules/profiles/build-tools.nix;
+          controller = ./modules/profiles/controller.nix;
+          devel = ./modules/profiles/devel.nix;
+          monitoring = ./modules/profiles/monitoring.nix;
+        };
+
+        mounts = {
+          shares = ./modules/mounts/shares.nix;
+          storage = ./modules/mounts/storage.nix;
+        };
+
+        testSuites = {
+          blktests = ./modules/testSuites/blktests.nix;
+          fstests = ./modules/testSuites/fstests.nix;
+          gitr = ./modules/testSuites/gitr.nix;
+          ltp = ./modules/testSuites/ltp.nix;
+          mmtests = ./modules/testSuites/mmtests.nix;
+          pynfs = ./modules/testSuites/pynfs.nix;
+          selftests = ./modules/testSuites/selftests.nix;
+          sysbench = ./modules/testSuites/sysbench.nix;
+        };
+
         user = ./modules/user.nix;
-        workflows.blktests = ./modules/workflows/blktests.nix;
-        workflows.fstests = ./modules/workflows/fstests.nix;
-        workflows.gitr = ./modules/workflows/gitr.nix;
-        workflows.ltp = ./modules/workflows/ltp.nix;
-        workflows.mmtests = ./modules/workflows/mmtests.nix;
-        workflows.pynfs = ./modules/workflows/pynfs.nix;
-        workflows.selftests = ./modules/workflows/selftests.nix;
-        workflows.sysbench = ./modules/workflows/sysbench.nix;
       };
 
       overlays = {
@@ -122,11 +147,47 @@
                 { nixpkgs.overlays = [ self.overlays.default ]; }
               ];
             }).config.system.build.toplevel;
+
+          # Build each test-suite module composed on top of the
+          # imageless backend plus the unprivileged account and
+          # the monitoring profile. The composition is the
+          # realistic shape a consumer deploys (a guest that runs
+          # a test suite on an unprivileged account with monitor
+          # units available), so a test-suite module that conflicts
+          # with imageless, user, or monitoring defaults surfaces
+          # in nix flake check rather than at consumer bringup.
+          # Monitoring is composed alongside because the monitor
+          # template units (monitor-<name>@<run-id>.service)
+          # exercise systemd template-instantiation paths that
+          # standalone evaluation of the module does not.
+          testSuiteChecks = nixpkgs.lib.mapAttrs' (
+            name: module:
+            nixpkgs.lib.nameValuePair "imageless-${name}" (buildBackend {
+              imports = [
+                self.nixosModules.backends.imageless
+                self.nixosModules.user
+                self.nixosModules.profiles.monitoring
+                module
+              ];
+              nixos-flake.monitoring.enable = true;
+            })
+          ) self.nixosModules.testSuites;
         in
         {
-          imageless = buildBackend self.nixosModules.imageless;
-          libvirt = buildBackend self.nixosModules.libvirt;
+          imageless = buildBackend self.nixosModules.backends.imageless;
+          libvirt = buildBackend self.nixosModules.backends.libvirt;
+          # The controller profile composes on top of a disk-booted
+          # backend; build it against libvirt so the check exercises
+          # the realistic control-node configuration.
+          controller = buildBackend {
+            imports = [
+              self.nixosModules.backends.libvirt
+              self.nixosModules.profiles.controller
+            ];
+            nixos-flake.controller.enable = true;
+          };
         }
+        // testSuiteChecks
       );
     };
 }
