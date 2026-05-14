@@ -78,6 +78,18 @@
         custom-pkgs = final: _: import ./pkgs final;
       };
 
+      templates = {
+        default = self.templates.imageless;
+        imageless = {
+          path = ./templates/imageless;
+          description = "Imageless NixOS VM (tmpfs root, virtiofs /nix/store, external kernel)";
+        };
+        libvirt = {
+          path = ./templates/libvirt;
+          description = "Libvirt-managed disk-image NixOS VM";
+        };
+      };
+
       # Expose the custom packages as direct flake outputs so they can be
       # built without going through a NixOS configuration.
       packages = forAllSystems (pkgs: {
