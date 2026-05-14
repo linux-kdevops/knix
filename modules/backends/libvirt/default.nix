@@ -21,6 +21,11 @@
     # so downstream consumers do not have to hand-write a matching
     # hardware-configuration.nix.
     (modulesPath + "/profiles/qemu-guest.nix")
+    # Libvirt-specific defaults for the unprivileged account.
+    # The user module itself is opt-in: importing this backend
+    # alone does not create the account. Importing the user
+    # module alongside picks up these backend-shaped defaults.
+    ./user.nix
   ];
 
   system.stateVersion = "25.11";

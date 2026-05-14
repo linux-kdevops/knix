@@ -17,7 +17,14 @@
   ...
 }:
 {
-  imports = [ (modulesPath + "/profiles/minimal.nix") ];
+  imports = [
+    (modulesPath + "/profiles/minimal.nix")
+    # Imageless-specific defaults for the unprivileged account.
+    # The user module itself is opt-in: importing this backend
+    # alone does not create the account. Importing the user
+    # module alongside picks up these backend-shaped defaults.
+    ./user.nix
+  ];
 
   system.stateVersion = "25.11";
 
