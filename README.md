@@ -21,6 +21,13 @@ modules (`shares`, `storage`), the profiles (`devel`,
 modules under `testSuites.*` — so a system can be minimal or
 carry the full kernel and storage testing toolchain.
 
+Beyond provisioning, the flake exposes development shells that bring
+the same reproducible toolchain to any host via `nix develop`:
+`build-kernel` and `build-qemu` for kernel and QEMU builds (the
+package set the `controller` profile installs, defined once in
+`lib/toolchain.nix`) and `systemd` for the host systemd control
+toolkit.
+
 **License**: copyleft-next-0.3.1
 
 ## Prerequisites
@@ -65,6 +72,20 @@ nix flake init --template "github:linux-kdevops/nixos-flake#libvirt"
 
 See [docs/usage.md](docs/usage.md) for customizing packages and
 NixOS options.
+
+## Development shells
+
+The same toolchain is available on any host without building a NixOS
+system:
+
+```shell
+nix develop .#build-kernel -c make ...        # kernel build env (gcc)
+nix develop .#build-kernel -c make LLVM=1 ... # clang
+nix develop .#build-qemu   -c make ...        # QEMU build env
+nix develop .#systemd -c systemctl --user list-units  # host systemd control
+```
+
+See [docs/usage.md](docs/usage.md) for what each shell provides.
 
 ## How it boots
 

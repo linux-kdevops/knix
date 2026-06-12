@@ -1,24 +1,14 @@
 # SPDX-License-Identifier: copyleft-next-0.3.1
 #
-# Library flake: NixOS modules, overlays, templates, and custom
-# packages for provisioning NixOS systems. Two backend modules
-# differ in the artifact each produces — imageless yields a system
-# closure booted directly by QEMU, libvirt yields a qcow2 disk
-# image.
+# Library flake for provisioning NixOS systems: backend modules (imageless
+# closure / libvirt disk image), profiles, overlays, packages and templates,
+# plus build-kernel/build-qemu/systemd devShells that bring the same toolchain
+# (lib/toolchain.nix) to any host via `nix develop`.
 #
-# Validate both backends:
-#   nix flake check
-#
-# Build a single backend closure:
-#   nix build .#checks.x86_64-linux.imageless
-#   nix build .#checks.x86_64-linux.libvirt
-#
-# Build an individual custom package:
-#   nix build .#cpupower
-#
-# Create a downstream configuration:
-#   nix flake init --template "github:linux-kdevops/nixos-flake"
-#   nix flake init --template "github:linux-kdevops/nixos-flake#libvirt"
+#   nix flake check                             # validate backends + checks
+#   nix build .#checks.x86_64-linux.imageless   # one backend closure
+#   nix develop .#build-kernel -c make ...      # kernel build env
+#   nix flake init -t github:linux-kdevops/nixos-flake
 {
   description = "NixOS modules, overlays, and templates for provisioning NixOS systems";
 

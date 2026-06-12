@@ -42,6 +42,33 @@ find $(dirname $(readlink --canonicalize $(which fio)))/.. -type f | sort
 `readlink --canonicalize` resolves the profile symlink to the
 actual store path. Replace `fio` with any binary name.
 
+## Development shells
+
+The flake exposes development shells so the same reproducible
+toolchain is available on any host, NixOS or not, without building a
+NixOS system. They are the non-NixOS counterpart to the `controller`
+profile: both draw from `lib/toolchain.nix`, so a NixOS control node
+and a `nix develop` shell agree on versions.
+
+`nix develop .#build-kernel` enters the kernel build environment —
+gcc, clang, rust and sparse, the LLVM binutils for `LLVM=1`, ccache,
+b4, and the kernel `rust-src`. `nix develop .#build-qemu` adds QEMU's
+own build inputs (meson/ninja/glib/...) for building QEMU from source.
+
+```shell
+nix develop .#build-kernel -c make ...        # gcc
+nix develop .#build-kernel -c make LLVM=1 ... # clang
+nix develop .#build-qemu   -c make ...        # QEMU
+```
+
+`nix develop .#systemd` provides the systemd client tools
+(`systemctl`, `systemd-run`, `busctl`, `varlinkctl`, `loginctl`) for
+driving a host's `systemd --user` manager over its D-Bus socket:
+
+```shell
+nix develop .#systemd -c systemctl --user list-units
+```
+
 ## Creating a configuration
 
 A configuration is a standalone flake project: its own directory
