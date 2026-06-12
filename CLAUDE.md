@@ -83,6 +83,14 @@ NEVER use short flags when a long-form alternative exists.
 `--template` not `-t`, `--recursive` not `-r`, `--parents` not
 `-p`. Exception: tools without long-form options (`ssh -p`).
 
+### Reference only upstream projects
+
+Comments and commit messages describe this flake and the upstream
+projects it packages — the Linux kernel, QEMU, xfstests, SPDK, BCC,
+and so on. Never name the downstream projects that combine this
+flake, nor the pipeline that drives it. The flake stands on its own;
+how a consumer wires it up belongs in that consumer's tree.
+
 ## Rules
 
 ### Imageless: external kernel, NixOS-built initramfs
