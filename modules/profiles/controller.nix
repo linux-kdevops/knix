@@ -17,53 +17,15 @@
 }:
 let
   cfg = config.nixos-flake.controller;
+  tc = import ../../lib/toolchain.nix { inherit pkgs; };
 in
 {
   options.nixos-flake.controller.enable = lib.mkEnableOption "the control-node environment";
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [
-      # Kconfig and `make menuconfig`: ncurses backs the menuconfig
-      # frontend, pkg-config resolves its build-time probes.
-      ncurses
-      pkg-config
-
-      # Kernel build toolchain. This is what a modern kernel tree's
-      # `make` and `make *config` invoke directly beyond stdenv:
-      # bison/flex for the parser generators, bc for kernel/timeconst,
-      # openssl for module signing, elfutils and pahole for objtool
-      # and BTF, cpio for the initramfs, kmod for depmod, zstd for
-      # module compression, rsync and hostname for the build scripts.
-      gcc
-      gnumake
-      bison
-      flex
-      bc
-      perl
-      openssl
-      elfutils
-      pahole
-      cpio
-      kmod
-      zstd
-      rsync
-      hostname
-
-      # Provisioning and orchestration: Ansible drives the playbooks,
-      # git checks out the trees under test, qemu-img manipulates
-      # guest disk images, virtiofsd shares host directories into
-      # guests.
-      ansible
-      git
-      qemu-utils
-      virtiofsd
-
-      # Python runtime the Ansible playbooks and helper scripts
-      # import.
-      python3
-      python3Packages.pyyaml
-      python3Packages.jinja2
-    ];
+    # Kernel/Kconfig toolchain + orchestration tools, shared with the build
+    # devShells through lib/toolchain.nix.
+    environment.systemPackages = tc.kernel ++ tc.orchestration;
 
     # System libvirt with the QEMU/KVM stack so the controller can
     # define, run, and tear down guest VMs. runAsRoot stays off and
