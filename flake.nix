@@ -128,6 +128,55 @@
           ;
       });
 
+      # Reproducible build toolchains usable on any host (NixOS or not). Nix
+      # provides the environment; the build picks the compiler/flags inside it.
+      #   nix develop .#build-kernel -c make ...
+      #   nix develop .#build-qemu   -c make ...
+      devShells = forAllSystems (
+        pkgs:
+        let
+          tc = import ./lib/toolchain.nix { inherit pkgs; };
+          kernelPackages =
+            tc.kernel
+            ++ tc.matrixExtras
+            ++ [
+              pkgs.ccache
+              pkgs.b4
+            ];
+          # CONFIG_RUST builds core/alloc from source -> needs rust-src.
+          rustLibSrc = pkgs.rustPlatform.rustLibSrc;
+        in
+        {
+          # No qemu inputsFrom: its NIX_CFLAGS_COMPILE overflows the kernel
+          # host-tool argv (E2BIG on fixdep).
+          build-kernel = pkgs.mkShell {
+            packages = kernelPackages;
+            env.RUST_LIB_SRC = rustLibSrc;
+          };
+
+          # Adds qemu's build inputs via inputsFrom + the python deps qemu's
+          # offline configure venv (mkvenv) needs.
+          build-qemu = pkgs.mkShell {
+            inputsFrom = [ pkgs.qemu ];
+            packages = kernelPackages ++ [
+              (pkgs.python3.withPackages (
+                ps: with ps; [
+                  setuptools
+                  wheel
+                  pip
+                ]
+              ))
+            ];
+            env.RUST_LIB_SRC = rustLibSrc;
+          };
+
+          # systemd client tools to drive a host user manager over D-Bus.
+          systemd = pkgs.mkShell {
+            packages = [ pkgs.systemd ];
+          };
+        }
+      );
+
       # Tree formatter for `nix fmt`. No overlay needed, so this uses
       # legacyPackages rather than re-importing nixpkgs.
       formatter = nixpkgs.lib.genAttrs systems (system: nixpkgs.legacyPackages.${system}.nixfmt);
