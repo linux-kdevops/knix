@@ -125,6 +125,9 @@
           nfstest
           pynfs
           xnvme
+          qemu
+          virtiofsd
+          socat
           ;
       });
 
