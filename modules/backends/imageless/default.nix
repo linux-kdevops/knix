@@ -26,7 +26,11 @@
     ./user.nix
   ];
 
-  system.stateVersion = "25.11";
+  # Built fresh, never upgraded in place, so this tracks the release each
+  # build is made from (the option's default). Pin a literal only if you
+  # persist a disk across nixpkgs upgrades:
+  # https://wiki.nixos.org/wiki/FAQ/When_do_I_update_stateVersion
+  system.stateVersion = lib.mkDefault config.system.nixos.release;
 
   services.openssh = {
     enable = true;

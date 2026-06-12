@@ -7,6 +7,7 @@
 # the consumer's responsibility and composes as additional
 # modules.
 {
+  config,
   pkgs,
   lib,
   modulesPath,
@@ -28,7 +29,11 @@
     ./user.nix
   ];
 
-  system.stateVersion = "25.11";
+  # Built fresh, never upgraded in place, so this tracks the release each
+  # build is made from (the option's default). Pin a literal only if you
+  # persist a disk across nixpkgs upgrades:
+  # https://wiki.nixos.org/wiki/FAQ/When_do_I_update_stateVersion
+  system.stateVersion = lib.mkDefault config.system.nixos.release;
 
   # Key-only SSH. Password below is serial-console break-glass.
   services.openssh = {

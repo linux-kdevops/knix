@@ -22,7 +22,7 @@
 {
   description = "NixOS modules, overlays, and templates for provisioning NixOS systems";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
   outputs =
     { self, nixpkgs }:
@@ -130,9 +130,7 @@
 
       # Tree formatter for `nix fmt`. No overlay needed, so this uses
       # legacyPackages rather than re-importing nixpkgs.
-      formatter = nixpkgs.lib.genAttrs systems (
-        system: nixpkgs.legacyPackages.${system}.nixfmt-rfc-style
-      );
+      formatter = nixpkgs.lib.genAttrs systems (system: nixpkgs.legacyPackages.${system}.nixfmt);
 
       # Per-backend system closures exercised by nix flake check.
       checks = nixpkgs.lib.genAttrs systems (
