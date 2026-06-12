@@ -20,6 +20,10 @@
   # dispatcher from /etc/bashrc.
   programs.bash.completion.enable = true;
 
+  # SPDK/DPDK guest VFIO: QEMU's emulated IOMMU advertises no interrupt
+  # remapping, so allow the unsafe path (safe inside a guest).
+  boot.extraModprobeConfig = "options vfio_iommu_type1 allow_unsafe_interrupts=1";
+
   environment.systemPackages = with pkgs; [
     # Storage and filesystem tools
     btrfs-progs
@@ -35,6 +39,7 @@
     libnvme
     nvme-cli
     sg3_utils
+    spdk
     xnvme
 
     # I/O performance
