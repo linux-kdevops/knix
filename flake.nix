@@ -184,6 +184,12 @@
             ];
             nixos-flake.controller.enable = true;
           };
+          devel = buildBackend {
+            imports = [
+              self.nixosModules.backends.imageless
+              self.nixosModules.profiles.devel
+            ];
+          };
         }
         // testSuiteChecks
       );
