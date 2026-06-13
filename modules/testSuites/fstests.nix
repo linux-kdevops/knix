@@ -9,7 +9,21 @@
 # invoke on the target host. Services are enabled with mkDefault so
 # consumers can turn them off for test subsets that do not exercise
 # them.
+#
+# It also declares the xfstests@<section>.service template unit so a
+# run is a first-class systemd object (one instance per config
+# section), driven and inspected remotely with systemctl. The config
+# and the ./check flags are supplied out-of-band on a host-shared
+# directory, so adding or changing sections needs no closure rebuild.
 { pkgs, lib, ... }:
+let
+  # The xfstests@.service reads its config and writes its results
+  # under this directory. Consumers mount a writable share here (the
+  # config is laid down before the run; results are read back after),
+  # which keeps section definitions out of the closure. The path is a
+  # fixed contract between the unit and whatever drives it.
+  stateDir = "/var/lib/xfstests";
+in
 {
   environment.systemPackages = with pkgs; [
     # Filesystem userland tools for the filesystems fstests covers
@@ -290,6 +304,43 @@
   # natural option Just Works here.
   boot.kernelModules = [ "xfs" ];
 
+  # The xfstests run as a first-class systemd unit. %i is an xfstests
+  # config-section name ([alnum_], so it is a valid systemd instance
+  # with no escaping — xfstests@xfs_4k.service, xfstests@btrfs_holes
+  # .service); the unit runs `check` for exactly that one section.
+  #
+  # Type=oneshot so the start job tracks the whole run and the unit
+  # lands a real Result/ExecMainStatus (the ./check exit code) instead
+  # of a backgrounded best-effort. A caller that does not want to block
+  # for the (possibly hours-long) run starts it with --no-block and
+  # polls `show --property=Result,ExecMainStatus,ActiveState`.
+  #
+  # The section's config and the rest of the ./check flags are read at
+  # start time from ${stateDir}/check.env (an EnvironmentFile carrying
+  # HOST_OPTIONS=<local.config> and XFSTESTS_CHECK_ARGS), laid down on
+  # the shared dir beforehand — so the set of sections and flags is
+  # data on the share, not part of the closure.
+  #
+  # WorkingDirectory is the shared dir on purpose: the xfstests-check
+  # wrapper sets RESULT_BASE=$PWD/results, so results land under
+  # ${stateDir}/results where the host (which mounted the share) reads
+  # them back. $XFSTESTS_CHECK_ARGS is written with a single $ so
+  # systemd word-splits it into separate ./check arguments.
+  systemd.services."xfstests@" = {
+    description = "xfstests check (section %i)";
+    serviceConfig = {
+      Type = "oneshot";
+      WorkingDirectory = stateDir;
+      EnvironmentFile = "${stateDir}/check.env";
+      ExecStart = "${pkgs.xfstests}/bin/xfstests-check -s %i $XFSTESTS_CHECK_ARGS";
+      StandardOutput = "journal+console";
+      StandardError = "journal+console";
+      # A full section can run for hours; never let systemd kill it.
+      TimeoutStartSec = "infinity";
+      SyslogIdentifier = "xfstests";
+    };
+  };
+
   # dm-flakey, dm-delay, dm-log-writes etc. (used by xfstests under
   # generic/, and exercised heavily once CONFIG_DM_* are enabled) drive
   # device-mapper through libdevmapper, which serializes operations via
@@ -324,6 +375,12 @@
   systemd.tmpfiles.rules = [
     "L+ /bin/bash     - - - - ${pkgs.bash}/bin/bash"
     "L+ /usr/bin/awk  - - - - ${pkgs.gawk}/bin/awk"
+
+    # The xfstests@.service config/results dir. Created so the unit's
+    # WorkingDirectory and EnvironmentFile resolve even before a share
+    # is mounted here; when a writable share is mounted at ${stateDir}
+    # this rule is a harmless no-op over the mount point.
+    "d ${stateDir} 0755 root root -"
 
     # Expose the xfstests tree at a stable, FHS-standard path so
     # driver scripts and external tools can cd into it without
