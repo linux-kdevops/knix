@@ -328,6 +328,12 @@ in
   # systemd word-splits it into separate ./check arguments.
   systemd.services."xfstests@" = {
     description = "xfstests check (section %i)";
+    # ./check and the test scripts shell out to `bash`, `hostname` and the
+    # filesystem userland by bare name. A service unit otherwise gets only
+    # systemd's minimal default PATH, so put the system profile on PATH —
+    # it carries everything this module adds to environment.systemPackages
+    # (bash, hostname, the fs tools, the _require_command deps).
+    path = [ "/run/current-system/sw" ];
     serviceConfig = {
       Type = "oneshot";
       WorkingDirectory = stateDir;
