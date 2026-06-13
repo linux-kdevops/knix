@@ -163,9 +163,16 @@
             env.RUST_LIB_SRC = rustLibSrc;
           };
 
-          # systemd client tools to drive a host user manager over D-Bus.
+          # systemd client tools to drive a system manager over D-Bus —
+          # locally over the user bus, or a remote one with `systemctl
+          # --host`. openssh is the transport `--host` shells out to, and
+          # systemd ships systemd-ssh-proxy for the `vsock/<cid>` and
+          # `unix/<path>` destinations a directly-booted guest is reached by.
           systemd = pkgs.mkShell {
-            packages = [ pkgs.systemd ];
+            packages = [
+              pkgs.systemd
+              pkgs.openssh
+            ];
           };
         }
       );
