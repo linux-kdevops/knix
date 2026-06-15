@@ -321,11 +321,19 @@ in
   # the shared dir beforehand — so the set of sections and flags is
   # data on the share, not part of the closure.
   #
-  # WorkingDirectory is the shared dir on purpose: the xfstests-check
-  # wrapper sets RESULT_BASE=$PWD/results, so results land under
-  # ${stateDir}/results where the host (which mounted the share) reads
-  # them back. $XFSTESTS_CHECK_ARGS is written with a single $ so
-  # systemd word-splits it into separate ./check arguments.
+  # Results are keyed by the running kernel's release so the same closure,
+  # direct-booted with different kernels, never overwrites another kernel's
+  # results. %v is the systemd "kernel release" specifier (identical to
+  # `uname -r`), resolved at unit-start — so this stays kernel-agnostic, no
+  # version is baked into the closure. The xfstests-check wrapper derives
+  # RESULT_BASE=$PWD/results, so WorkingDirectory=${stateDir}/%v lands results
+  # at ${stateDir}/<kver>/results/<section> under the writable share (the
+  # wrapper's `results` is the single results level; the per-kernel dir sits
+  # beside the config files at the share root), which the host reads back. The
+  # `-` tolerates the per-kernel dir being absent for the first ExecStartPre
+  # (which creates it, running from / since the working dir does not exist yet);
+  # the main ExecStart then chdirs into it. $XFSTESTS_CHECK_ARGS is written with
+  # a single $ so systemd word-splits it into separate ./check arguments.
   systemd.services."xfstests@" = {
     description = "xfstests check (section %i)";
     # ./check and the test scripts shell out to `bash`, `hostname` and the
@@ -336,8 +344,9 @@ in
     path = [ "/run/current-system/sw" ];
     serviceConfig = {
       Type = "oneshot";
-      WorkingDirectory = stateDir;
+      WorkingDirectory = "-${stateDir}/%v";
       EnvironmentFile = "${stateDir}/check.env";
+      ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${stateDir}/%v";
       ExecStart = "${pkgs.xfstests}/bin/xfstests-check -s %i $XFSTESTS_CHECK_ARGS";
       StandardOutput = "journal+console";
       StandardError = "journal+console";
