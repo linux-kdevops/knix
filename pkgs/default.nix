@@ -25,6 +25,7 @@ pkgs: {
   faster-biolatency = pkgs.callPackage ./faster-biolatency/package.nix { };
   fustip = pkgs.callPackage ./fustip/package.nix { };
   libbpf-tools = pkgs.callPackage ./libbpf-tools/package.nix { };
+  lmcache = pkgs.pkgsUnstable.python313Packages.callPackage ./lmcache/package.nix { };
   nfstest = pkgs.callPackage ./nfstest/package.nix { };
   nvme-bpf = pkgs.callPackage ./nvme-bpf/package.nix { };
   pynfs = pkgs.callPackage ./pynfs/package.nix { };
