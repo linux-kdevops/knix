@@ -28,6 +28,13 @@ pkgs: {
   libbpf-tools = pkgs.callPackage ./libbpf-tools/package.nix { };
   lmcache = pkgs.pkgsUnstable.python313Packages.callPackage ./lmcache/package.nix { };
   nfstest = pkgs.callPackage ./nfstest/package.nix { };
+  nvidia-driver = pkgs.callPackage ./nvidia-driver/package.nix { };
+  # Unpacked and patched as nixpkgs builds the open modules, so a patch
+  # added to the driver reaches the modules built from this tree too; its
+  # version is the driver release, which nvidia.ko must match.
+  nvidia-open-src = pkgs.srcOnly pkgs.nvidia-driver.open // {
+    inherit (pkgs.nvidia-driver) version;
+  };
   nvme-bpf = pkgs.callPackage ./nvme-bpf/package.nix { };
   pynfs = pkgs.callPackage ./pynfs/package.nix { };
   systing = pkgs.callPackage ./systing/package.nix { };

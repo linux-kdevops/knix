@@ -261,6 +261,13 @@ after it, writing under `knix.monitoring.outputDir`.
 the system's metrics to `knix.telemetry.metrics.url` and its
 journal to `knix.telemetry.logs.url` for the whole boot.
 
+`nixosModules.profiles.gpu` (`modules/profiles/gpu.nix`) adds the
+NVIDIA driver userspace and switches nixpkgs to its CUDA build, for
+a guest that boots an external kernel and reaches a GPU through VFIO
+passthrough. The kernel modules are built against that kernel from
+`nvidia-open-src`, the same driver release; `knix.gpu.cudaCapabilities`
+narrows the GPU generations CUDA compiles for.
+
 `nixosModules.profiles.controller` is described under
 [Controller host](#controller-host).
 
