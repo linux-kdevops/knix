@@ -24,6 +24,7 @@ pkgs: {
   ebpf-syscall = pkgs.callPackage ./ebpf-syscall/package.nix { };
   faster-biolatency = pkgs.callPackage ./faster-biolatency/package.nix { };
   fustip = pkgs.callPackage ./fustip/package.nix { };
+  kvcache-bench = pkgs.callPackage ./kvcache-bench/package.nix { };
   libbpf-tools = pkgs.callPackage ./libbpf-tools/package.nix { };
   lmcache = pkgs.pkgsUnstable.python313Packages.callPackage ./lmcache/package.nix { };
   nfstest = pkgs.callPackage ./nfstest/package.nix { };
