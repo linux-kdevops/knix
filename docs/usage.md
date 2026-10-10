@@ -329,7 +329,8 @@ per-package overlays and merges custom packages from `pkgs/`:
 - **spdk**: installs the CMB and PMR example exercisers
 
 The flake also exports `overlays.fio`, `overlays.xfstests` and
-`overlays.custom-pkgs` on their own.
+`overlays.custom-pkgs` on their own, and `overlays.unstable`, which
+adds the `pkgsUnstable` set described below.
 
 ### Overriding a package from a configuration
 
@@ -368,6 +369,29 @@ The xfstests overlay carries downstream patches in `patches`, so a
 source that already contains them fails to patch; set
 `patches = [ ];` in the same `overrideAttrs`, or filter the list.
 `overlays/xfstests/overlay.nix` says what each patch is for.
+
+### Overriding a package from nixos-unstable
+
+Packages whose usable version has not reached the release channel come
+from `pkgsUnstable`, a second package set imported from the
+`nixpkgs-unstable` input under the same nixpkgs config. An overlay on
+the main set does not reach into it, so a configuration overrides one
+of its packages by extending that set instead:
+
+```nix
+nixpkgs.overlays = [
+  knix.overlays.default
+  (final: prev: {
+    pkgsUnstable = prev.pkgsUnstable.extend (ufinal: uprev: {
+      pythonPackagesExtensions = uprev.pythonPackagesExtensions ++ [
+        (pyfinal: pyprev: {
+          vllm = pyprev.vllm.overridePythonAttrs { src = inputs.vllm-src; };
+        })
+      ];
+    });
+  })
+];
+```
 
 ### Pinning a specific upstream commit
 
