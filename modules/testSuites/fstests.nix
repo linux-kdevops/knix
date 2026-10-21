@@ -34,10 +34,6 @@ in
     f2fs-tools
 
     # Load generators and stressors fstests scripts invoke.
-    # (dbench used to be in nixpkgs; upstream removed it in late
-    # 2025 as unmaintained for 14 years and broken, so fstests
-    # subsets that need dbench currently fall back to the consumer's
-    # own checkout.)
     fio
     stress-ng
 
