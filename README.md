@@ -25,8 +25,10 @@ Beyond provisioning, the flake exposes development shells that bring
 the same reproducible toolchain to any host via `nix develop`:
 `build-kernel` and `build-qemu` for kernel and QEMU builds (the
 package set the `controller` profile installs, defined once in
-`lib/toolchain.nix`) and `systemd` for the host systemd control
-toolkit.
+`lib/toolchain.nix`), `check-kernel` for the static checkers,
+`build-kselftests` and `build-usertests` for the kernel's test
+binaries, `transfer` for moving build outputs between hosts, and
+`systemd` for the host systemd control toolkit.
 
 **License**: copyleft-next-0.3.1
 
@@ -82,10 +84,8 @@ system:
 nix develop .#build-kernel -c make ...
 ```
 
-`build-kernel` and `build-qemu` are the kernel and QEMU build
-environments, `systemd` the host systemd control toolkit. See
-[docs/usage.md](docs/usage.md) for every invocation and what each
-shell provides.
+See [docs/usage.md](docs/usage.md) for every shell, its
+invocation and what it provides.
 
 ## How it boots
 
