@@ -2,30 +2,32 @@
 #
 # Custom packages not available in nixpkgs.
 #
-# Each package is a file declaring a function whose arguments are its
-# dependencies. Use callPackage to compose them:
+# Each package is a directory, as in nixpkgs' pkgs/by-name: package.nix
+# declares a function whose arguments are its dependencies, and the files
+# it uses (patches under patches/) sit beside it. Use callPackage to
+# compose them:
 #
-#   xnvme = pkgs.callPackage ./xnvme.nix { };
+#   xnvme = pkgs.callPackage ./xnvme/package.nix { };
 #
 # The overlay at overlays/default.nix imports this file and merges
 # the packages into the nixpkgs set.
 #
 # Reference: https://nix.dev/tutorials/callpackage
 pkgs: {
-  blktests = pkgs.callPackage ./blktests.nix { };
-  bpf-perf-tools = pkgs.callPackage ./bpf-perf-tools.nix { };
-  cpupower = pkgs.callPackage ./cpupower.nix { };
-  damo = pkgs.callPackage ./damo.nix { };
-  dbench = pkgs.callPackage ./dbench.nix { };
-  ebpf_exporter = pkgs.callPackage ./ebpf_exporter.nix { };
-  ebpf-fix-latency-tool = pkgs.callPackage ./ebpf-fix-latency-tool.nix { };
-  ebpf-syscall = pkgs.callPackage ./ebpf-syscall.nix { };
-  faster-biolatency = pkgs.callPackage ./faster-biolatency.nix { };
-  fustip = pkgs.callPackage ./fustip.nix { };
-  libbpf-tools = pkgs.callPackage ./libbpf-tools.nix { };
-  nfstest = pkgs.callPackage ./nfstest.nix { };
-  nvme-bpf = pkgs.callPackage ./nvme-bpf.nix { };
-  pynfs = pkgs.callPackage ./pynfs.nix { };
-  systing = pkgs.callPackage ./systing.nix { };
-  xnvme = pkgs.callPackage ./xnvme.nix { };
+  blktests = pkgs.callPackage ./blktests/package.nix { };
+  bpf-perf-tools = pkgs.callPackage ./bpf-perf-tools/package.nix { };
+  cpupower = pkgs.callPackage ./cpupower/package.nix { };
+  damo = pkgs.callPackage ./damo/package.nix { };
+  dbench = pkgs.callPackage ./dbench/package.nix { };
+  ebpf_exporter = pkgs.callPackage ./ebpf_exporter/package.nix { };
+  ebpf-fix-latency-tool = pkgs.callPackage ./ebpf-fix-latency-tool/package.nix { };
+  ebpf-syscall = pkgs.callPackage ./ebpf-syscall/package.nix { };
+  faster-biolatency = pkgs.callPackage ./faster-biolatency/package.nix { };
+  fustip = pkgs.callPackage ./fustip/package.nix { };
+  libbpf-tools = pkgs.callPackage ./libbpf-tools/package.nix { };
+  nfstest = pkgs.callPackage ./nfstest/package.nix { };
+  nvme-bpf = pkgs.callPackage ./nvme-bpf/package.nix { };
+  pynfs = pkgs.callPackage ./pynfs/package.nix { };
+  systing = pkgs.callPackage ./systing/package.nix { };
+  xnvme = pkgs.callPackage ./xnvme/package.nix { };
 }

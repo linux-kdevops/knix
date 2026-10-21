@@ -4,7 +4,7 @@
 #
 # Upstream: https://github.com/linux-blktests/blktests
 #
-# Ships the blktests package (pkgs/blktests.nix) plus the userland
+# Ships the blktests package (pkgs/blktests/package.nix) plus the userland
 # its test groups probe with _have_program, and declares the
 # blktests@<group>.service template unit so a run is a first-class
 # systemd object (one instance per test group), driven and

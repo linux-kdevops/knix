@@ -28,7 +28,7 @@ knix/
 │   ├── testSuites/    One module per test suite
 │   ├── user.nix       Opt-in unprivileged account
 │   └── user-options.nix  Shared option schema for that account
-├── pkgs/              Packages not in nixpkgs, via callPackage
+├── pkgs/              Packages not in nixpkgs: <name>/package.nix, patches/
 ├── overlays/          One file per overridden nixpkgs package, plus pkgs/
 ├── templates/         Starter configurations for `nix flake init --template`
 ├── LICENSES/

@@ -8,7 +8,7 @@
 # module supplies only the Python runtime and ply parser-generator
 # the harness imports, plus the NFS userland the scripts shell out
 # to for server-side fixtures. A pre-built pynfs binary is
-# available as a custom package in this flake (pkgs/pynfs.nix) but
+# available as a custom package in this flake (pkgs/pynfs/package.nix) but
 # is not installed by default to avoid duplicating the consumer's
 # own checkout.
 { pkgs, ... }:

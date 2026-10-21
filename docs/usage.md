@@ -486,8 +486,9 @@ checkout to match the running kernel.
 ## Custom packages
 
 The `pkgs/` directory holds packages not available in nixpkgs.
-Each package is a file declaring a function, composed via
-[callPackage](https://nix.dev/tutorials/callpackage). The overlay
+Each package is a directory whose `package.nix` declares a function,
+composed via [callPackage](https://nix.dev/tutorials/callpackage),
+with its patches under `patches/`. The overlay
 imports `pkgs/default.nix` and merges them into the nixpkgs set.
 
 `pkgs/default.nix` names every package and each file's header says

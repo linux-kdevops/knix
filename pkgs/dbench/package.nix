@@ -32,7 +32,7 @@ stdenv.mkDerivation {
 
   # gzopen() returns a gzFile, which is already a pointer; GCC 14 makes
   # the gzFile * declarations an error.
-  patches = [ ./dbench-gzfile.patch ];
+  patches = [ ./patches/dbench-gzfile.patch ];
 
   nativeBuildInputs = [ autoconf ];
   buildInputs = [

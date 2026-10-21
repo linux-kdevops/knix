@@ -34,7 +34,7 @@ stdenv.mkDerivation {
     hash = "sha256-Gy5mr8xdXcc+CrzbRyp48cKSwhfCLjL7gKUpldDVxik=";
   };
 
-  patches = [ ./blktests-runtime-max-sec.patch ];
+  patches = [ ./patches/blktests-runtime-max-sec.patch ];
 
   buildInputs = [ liburing ];
 
