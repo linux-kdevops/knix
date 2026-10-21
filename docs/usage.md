@@ -69,6 +69,15 @@ driving a host's `systemd --user` manager over its D-Bus socket:
 nix develop .#systemd -c systemctl --user list-units
 ```
 
+Four more shells cover the rest of a kernel workflow:
+`check-kernel` is `build-kernel` plus the static checkers the kernel's
+submission documentation names (sparse, clippy, coccinelle,
+libabigail, Sphinx), `build-kselftests` and `build-usertests` build
+`tools/testing/selftests` and the userspace harnesses under
+`tools/testing`, and `transfer` carries `nix copy` over OpenSSH to
+move build outputs between hosts. `flake.nix` states what each one
+adds and why.
+
 ## Creating a configuration
 
 A configuration is a standalone flake project: its own directory
@@ -93,12 +102,16 @@ overlays, and commented-out examples for building packages from
 local source checkouts:
 
 ```shell
-nix flake init --template "path:$PWD/../.."
+nix flake init --template "path:$PWD/../.."           # imageless
+nix flake init --template "path:$PWD/../..#libvirt"   # libvirt
 ```
 
-`nix flake init` copies `templates/imageless/flake.nix` into the
-current directory. The copied file is independent of the template:
-future changes to the upstream template do not update your copy.
+`nix flake init` copies the template's `flake.nix` and `default.nix`
+into the current directory: `flake.nix` composes the backend, the
+user module and the overlay, and `default.nix` carries the per-VM
+part (profiles, test suites, hostname, SSH keys). The copied files
+are independent of the template: future changes to the upstream
+template do not update your copy.
 The link between your configuration and knix is the
 `inputs.knix.url` flake input, not the template itself.
 
@@ -113,11 +126,11 @@ $EDITOR flake.nix
 Nix flakes only evaluate files
 [tracked by git](https://nix.dev/manual/nix/stable/command-ref/new-cli/nix3-flake#flake-references).
 The `git add` is required before the first build. Subsequent edits
-to `flake.nix` are picked up from the working tree without a new
+to tracked files are picked up from the working tree without a new
 commit:
 
 ```shell
-git init && git add flake.nix
+git init && git add flake.nix default.nix
 nix build .#nixosConfigurations.vm.config.system.build.toplevel
 readlink --canonicalize result
 ```
@@ -140,12 +153,13 @@ input and imports its modules works as a configuration:
       modules = [
         knix.nixosModules.backends.imageless
         knix.nixosModules.profiles.devel
-        {
-          nixpkgs.overlays = [ knix.overlays.default ];
-          environment.systemPackages = with nixpkgs.legacyPackages.x86_64-linux; [
-            gdb
-          ];
-        }
+        (
+          { pkgs, ... }:
+          {
+            nixpkgs.overlays = [ knix.overlays.default ];
+            environment.systemPackages = [ pkgs.gdb ];
+          }
+        )
       ];
     };
   };
@@ -154,7 +168,9 @@ input and imports its modules works as a configuration:
 
 `nixpkgs.follows = "knix/nixpkgs"` ensures both flakes use
 the same nixpkgs revision. Without it, the configuration would
-pull a second copy of nixpkgs.
+pull a second copy of nixpkgs. Packages come from the module's
+`pkgs` argument rather than `nixpkgs.legacyPackages`, so they carry
+the overlay.
 
 ### What the modules provide
 
@@ -218,20 +234,46 @@ pre-mount `mkfs` oneshot with custom arguments, or
 for usage.
 
 `nixosModules.profiles.devel` (`modules/profiles/devel.nix`)
-adds kernel testing and storage tools, grouped by purpose:
-filesystem and block layer tooling (xfstests, xfsprogs,
-btrfs-progs, e2fsprogs, lvm2, parted), NVMe and SCSI (nvme-cli,
-libnvme, sg3_utils, xnvme), I/O generation (fio with liburing,
-stress-ng), NFS (nfs-utils, nfstest, pynfs), BPF and tracing
-(bpftrace, bcc, libbpf-tools, blktrace, trace-cmd), monitoring
-and profiling (perf, cpupower, damo, htop, iotop, numactl,
-pagemon, powertop, sysstat), selftest and blktests/fstests
-runtime dependencies (acl, attr, keyutils, libcap, libseccomp,
-mdadm, quota, rpcbind), and general developer comfort (editors,
-shells, git, jq, strace, kmod). The module also pulls in
-`programs.bash.completion.enable` and the Python data-analysis
-stack (matplotlib, numpy, pandas). See `modules/profiles/devel.nix`
-for the authoritative list.
+adds kernel testing and storage tools, grouped in the file by
+purpose: filesystem and block layer, NVMe and SCSI (SPDK and xNVMe
+among them), I/O generation, NFS, BPF and tracing (including this
+flake's own BPF tools), monitoring and profiling, the xfstests and
+blktests harnesses with their runtime dependencies, editors and
+shells, and Python with its data-analysis libraries. It also
+enables bash completion and allows VFIO's unsafe interrupts for
+SPDK under QEMU's emulated IOMMU. The file is the list; it is not
+repeated here.
+
+`nixosModules.profiles.build-tools`
+(`modules/profiles/build-tools.nix`) adds GNU Autotools and the
+headers and libraries in-tree test frameworks expect on the target,
+without picking a compiler.
+
+`nixosModules.profiles.monitoring`
+(`modules/profiles/monitoring.nix`), enabled with
+`knix.monitoring.enable`, declares `monitor-<name>@<run-id>`
+template units that a caller starts before a workload and stops
+after it, writing under `knix.monitoring.outputDir`.
+
+`nixosModules.profiles.telemetry`
+(`modules/profiles/telemetry.nix`), enabled with
+`knix.telemetry.enable`, runs one Grafana Alloy agent that pushes
+the system's metrics to `knix.telemetry.metrics.url` and its
+journal to `knix.telemetry.logs.url` for the whole boot.
+
+`nixosModules.profiles.controller` is described under
+[Controller host](#controller-host).
+
+`nixosModules.testSuites.<suite>` (`modules/testSuites/`) carries
+one module per suite: blktests, fstests, gitr, kunit, ltp, mmtests,
+pynfs, selftests, sysbench and usertests. Each installs the
+userland its suite needs. The ones this flake can run declare
+systemd template units, one instance per unit of work:
+`xfstests@<section>`, `blktests@<group>`, `kunit@<suite>`,
+`kselftest@<collection>` and `usertests@<binary>`. Their
+configuration and results live on a directory the host shares in,
+so changing a run needs no rebuild; each module's header states its
+contract.
 
 ## Updating nixpkgs
 
@@ -271,16 +313,23 @@ it specifies.
 ### What knix provides
 
 The `overlays/` directory customizes nixpkgs packages. Each file
-overrides one package. The default overlay (`overlays.default`)
-composes all per-package overlays and merges custom packages from
-`pkgs/`.
+overrides one package, and its header states what it changes and
+why. The default overlay (`overlays.default`) composes all
+per-package overlays and merges custom packages from `pkgs/`:
 
-Currently included:
+- **fio**: builds with liburing and installs `t/io_uring`, the
+  NVMe test scripts and the example job files
+- **xfstests**: takes a current release, with liburing and gdbm,
+  the downstream patches it still needs, and a run directory that
+  is a writable copy of the tree
+- **xfsprogs**: takes a newer release and builds from a git
+  checkout as well as a release tarball
+- **xfsdump**: survives long directory entry names under
+  `_FORTIFY_SOURCE=3`
+- **spdk**: installs the CMB and PMR example exercisers
 
-- **fio**: enables liburing, installs t/io_uring exerciser,
-  NVMe test scripts, and example job files
-- **xfstests**: bumps nixpkgs 2023.05.14 (broken with modern
-  GCC) to 2026.03.20
+The flake also exports `overlays.fio`, `overlays.xfstests` and
+`overlays.custom-pkgs` on their own.
 
 ### Overriding a package from a configuration
 
@@ -290,15 +339,15 @@ goes first, then any user overlays that build on top of it.
 For example, xfstests goes through three layers:
 
 ```
-nixpkgs base                → xfstests 2023.05.14 (broken)
-knix.overlays.default → xfstests 2026.03.20 (bumped)
-user overlay                → xfstests from local checkout
+nixpkgs base           → xfstests as nixpkgs packages it
+knix.overlays.default  → a current release with knix's changes
+user overlay           → xfstests from a local checkout
 ```
 
 The user overlay's `prev.xfstests` is the xfstests from
-knix's overlay (the bumped version). `overrideAttrs`
-replaces only `src`, keeping everything else (build inputs,
-install phase, patches) from the previous layer:
+knix's overlay. `overrideAttrs` replaces only `src`, keeping
+everything else (build inputs, patch and install phases) from the
+previous layer:
 
 ```nix
 nixpkgs.overlays = [
@@ -314,6 +363,10 @@ nixpkgs.overlays = [
 The `xfstests-src` input is a local source checkout declared as
 a flake input with `flake = false` (see the template for
 commented-out examples).
+
+The xfstests overlay applies its downstream patches in
+`patchPhase`, so a source that already carries one fails to patch.
+`overlays/xfstests.nix` names each patch and when it goes away.
 
 ### Pinning a specific upstream commit
 
@@ -377,9 +430,9 @@ For projects hosted on GitHub, use `fetchFromGitHub`:
 ```
 
 Nix will fail with a hash mismatch on the first build and print
-the correct `hash` value to use. Clear `patches = [];` when the
-upstream source already includes fixes that knix's overlay
-backports.
+the correct `hash` value to use. `patches = [];` drops the
+backport nixpkgs' fio recipe applies, which a newer source already
+contains.
 
 The user never needs to modify knix's overlays. All
 customization happens in the configuration's own `flake.nix`.
@@ -419,28 +472,16 @@ dependencies, and install phase from the original derivation.
 Changes to the local source directory are picked up on every
 `nix build` without updating the flake lock.
 
-This pattern works for any nixpkgs package. The template includes
-commented-out examples for fio and kmod. Clear `patches = [];`
-when the local source already includes fixes that the knix
-overlay backports.
+This pattern works for any package whose recipe builds from a
+source tree, whether nixpkgs' or this flake's. The templates
+include a commented-out example for fio, which sets
+`patches = [];` for the reason given under
+[Pinning a specific upstream commit](#pinning-a-specific-upstream-commit),
+and an xfstests source meets the `patchPhase` caveat above.
 
-The following packages are supported by the devel module and can
-be overridden this way:
-
-| Package | Input name | Overlay |
-|---|---|---|
-| cpupower | `kernel-src` | `prev.cpupower.overrideAttrs { src = inputs.kernel-src; }` |
-| damo | `damo-src` | `prev.damo.overrideAttrs { src = inputs.damo-src; }` |
-| fio | `fio-src` | `prev.fio.overrideAttrs { src = inputs.fio-src; patches = []; }` |
-| kmod | `kmod-src` | `prev.kmod.overrideAttrs { src = inputs.kmod-src; }` |
-| nfstest | `nfstest-src` | `prev.nfstest.overrideAttrs { src = inputs.nfstest-src; }` |
-| pynfs | `pynfs-src` | `prev.pynfs.overrideAttrs { src = inputs.pynfs-src; }` |
-| xfstests | `xfstests-src` | `prev.xfstests.overrideAttrs { src = inputs.xfstests-src; }` |
-| xnvme | `xnvme-src` | `prev.xnvme.overrideAttrs { src = inputs.xnvme-src; }` |
-
-`cpupower` uses the kernel source tree (it builds from
-`tools/power/cpupower/`). Point `kernel-src` to your kernel
-checkout to match the running kernel version.
+`cpupower` here is this flake's package, built from the kernel
+tree's `tools/power/cpupower/`. Override its `src` with your kernel
+checkout to match the running kernel.
 
 ## Custom packages
 
@@ -449,14 +490,13 @@ Each package is a file declaring a function, composed via
 [callPackage](https://nix.dev/tutorials/callpackage). The overlay
 imports `pkgs/default.nix` and merges them into the nixpkgs set.
 
-Currently included:
+`pkgs/default.nix` names every package and each file's header says
+what it is; the flake exports them all under `packages`, next to
+the few nixpkgs tools a consumer resolves from here:
 
-- **damo**: DAMON user-space tool for data access monitoring
-- **libbpf-tools**: standalone CO-RE BPF tracing tools (74
-  binaries with `-libbpf` suffix, matching Debian convention)
-- **nfstest**: NFS test suite (17 test scripts)
-- **pynfs**: Python NFSv4 conformance test suite
-- **xnvme**: cross-platform NVMe user space library and tools
+```shell
+nix eval .#packages.x86_64-linux --apply builtins.attrNames
+```
 
 ## Host configuration via virtiofs
 
@@ -506,7 +546,9 @@ redirecting `XDG_CONFIG_HOME` loses nothing.
 The mount point is `/etc/xdg-host` rather than `/etc/xdg` because
 NixOS generates its own files in `/etc/xdg`. The `XDG_CONFIG_DIRS`
 override uses `lib.mkForce` because NixOS already sets this
-variable in `shells-environment.nix`. Changes on the host are live
+variable: `programs/environment.nix` defines it as a session
+variable, which `shells-environment.nix` copies into
+`environment.variables`. Changes on the host are live
 in the guest without rebuilding.
 
 This works for any user in the guest (root, test accounts) because
