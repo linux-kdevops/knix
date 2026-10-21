@@ -107,7 +107,7 @@
   # boot.kernel.enable=false.
   #
   # The upstream `mkIf config.boot.kernel.enable` block in
-  # kernel.nix (around line 441) bundles eleven separate things
+  # kernel.nix bundles eleven separate things
   # under one gate. Five of them genuinely depend on NixOS
   # having built the kernel itself — system.build.kernel,
   # system.modulesTree, the system.systemBuilderCommands that
@@ -169,7 +169,7 @@
 
   # Re-add the upstream-NixOS default kernelModules list that the
   # same boot.kernel.enable gate skips. Both `loop` and `atkbd` are
-  # part of nixos/modules/system/boot/kernel.nix:455 — `loop`
+  # part of nixos/modules/system/boot/kernel.nix — `loop`
   # specifically because every fstests test that exercises
   # snapshot/dm-flakey/loop-backed scratch (xfs/664, generic/097
   # and friends) calls `losetup` against a freshly-created file
