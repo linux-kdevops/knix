@@ -5,6 +5,6 @@
 # turns into an abort on the first long name. Copy past the stub instead.
 final: prev: {
   xfsdump = prev.xfsdump.overrideAttrs (prevAttrs: {
-    patches = (prevAttrs.patches or [ ]) ++ [ ./xfsdump-dirent-name-fortify.patch ];
+    patches = (prevAttrs.patches or [ ]) ++ [ ./patches/xfsdump-dirent-name-fortify.patch ];
   });
 }

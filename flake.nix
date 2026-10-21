@@ -91,8 +91,8 @@
 
       overlays = {
         default = import ./overlays;
-        fio = import ./overlays/fio.nix;
-        xfstests = import ./overlays/xfstests.nix;
+        fio = import ./overlays/fio/overlay.nix;
+        xfstests = import ./overlays/xfstests/overlay.nix;
         custom-pkgs = final: _: import ./pkgs final;
       };
 

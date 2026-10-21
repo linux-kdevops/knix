@@ -312,9 +312,9 @@ it specifies.
 
 ### What knix provides
 
-The `overlays/` directory customizes nixpkgs packages. Each file
-overrides one package, and its header states what it changes and
-why. The default overlay (`overlays.default`) composes all
+The `overlays/` directory customizes nixpkgs packages. Each
+directory overrides one package: its `overlay.nix` header states
+what it changes and why, and its patches sit under `patches/`. The default overlay (`overlays.default`) composes all
 per-package overlays and merges custom packages from `pkgs/`:
 
 - **fio**: builds with liburing and installs `t/io_uring`, the
@@ -366,7 +366,7 @@ commented-out examples).
 
 The xfstests overlay applies its downstream patches in
 `patchPhase`, so a source that already carries one fails to patch.
-`overlays/xfstests.nix` names each patch and when it goes away.
+`overlays/xfstests/overlay.nix` names each patch and when it goes away.
 
 ### Pinning a specific upstream commit
 

@@ -29,7 +29,7 @@ knix/
 │   ├── user.nix       Opt-in unprivileged account
 │   └── user-options.nix  Shared option schema for that account
 ├── pkgs/              Packages not in nixpkgs: <name>/package.nix, patches/
-├── overlays/          One file per overridden nixpkgs package, plus pkgs/
+├── overlays/          Overridden nixpkgs packages: <name>/overlay.nix, patches/
 ├── templates/         Starter configurations for `nix flake init --template`
 ├── LICENSES/
 ├── COPYING            License overview and dual-licensing guidance

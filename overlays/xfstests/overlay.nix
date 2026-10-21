@@ -70,9 +70,9 @@ in
     # under its own libexec, where common/config's /usr/libexec fallback
     # cannot find it.
     patchPhase = (prevAttrs.patchPhase or "") + ''
-      patch -p1 < ${./xfstests-runtime-max-sec.patch}
-      patch -p1 < ${./xfstests-recreate-test-dev-bootstrap.patch}
-      patch -p1 < ${./xfstests-xunit-testcases.patch}
+      patch -p1 < ${./patches/xfstests-runtime-max-sec.patch}
+      patch -p1 < ${./patches/xfstests-recreate-test-dev-bootstrap.patch}
+      patch -p1 < ${./patches/xfstests-xunit-testcases.patch}
       substituteInPlace tests/xfs/031 --replace-fail ' 3 1 true' ' 3 1 ${prev.coreutils}/bin/true'
       substituteInPlace common/config \
         --replace-fail /usr/libexec/xfsprogs ${final.xfsprogs.out}/libexec/xfsprogs
