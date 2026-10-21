@@ -41,28 +41,34 @@ in
       prev.gdbm
       prev.liburing
     ];
-    # Upstream check already runs every test in its own transient systemd
-    # scope (fs<seq>.scope, feature-detected) so a hung test's whole process
-    # tree can be killed from outside, but nothing bounds a test's runtime.
-    # Carry the downstream watchdog patch: when TEST_TIMEOUT (seconds,
-    # global) or TEST_TIMEOUTS ("<seq>:<seconds> ..." per-test overrides) is
-    # set in check's environment, the scope gets RuntimeMaxSec, so systemd
-    # kills an overrunning test and check records the failure and moves on.
-    # Unset keeps upstream behavior: no limit. Queued for xfstests upstream;
-    # drop the patch on the version bump that includes it. The recipe
-    # replaces patchPhase wholesale (postPatch would be silently ignored),
-    # so append there.
-    # A second downstream patch: with RECREATE_TEST_DEV set, check mounts
-    # TEST_DEV from init_rc at startup, before the first section recreates it,
-    # so a fresh, never-formatted test device fails that mount and check exits.
-    # The patch formats TEST_DEV up front under RECREATE_TEST_DEV, so a raw
-    # device is initialised on its first run. Queued for xfstests upstream; drop
-    # on the version bump that includes it.
-    # A third: check keeps each test's xunit testcase under its private $tmp
-    # until the section ends, so a guest that crashes mid-section loses the
-    # results of every test that finished. XUNIT_TESTCASES names a file to
-    # append them to instead, on storage that outlives the guest, so the run
-    # can resume with -E. Unset keeps upstream behaviour.
+    # Downstream patches, each queued for xfstests upstream; drop one on the
+    # version bump that includes it.
+    patches = (prevAttrs.patches or [ ]) ++ [
+      # Upstream check already runs every test in its own transient systemd
+      # scope (fs<seq>.scope, feature-detected) so a hung test's whole
+      # process tree can be killed from outside, but nothing bounds a test's
+      # runtime. When TEST_TIMEOUT (seconds, global) or TEST_TIMEOUTS
+      # ("<seq>:<seconds> ..." per-test overrides) is set in check's
+      # environment, the scope gets RuntimeMaxSec, so systemd kills an
+      # overrunning test and check records the failure and moves on. Unset
+      # keeps upstream behavior: no limit.
+      ./patches/xfstests-runtime-max-sec.patch
+      # With RECREATE_TEST_DEV set, check mounts TEST_DEV from init_rc at
+      # startup, before the first section recreates it, so a fresh,
+      # never-formatted test device fails that mount and check exits. Format
+      # TEST_DEV up front under RECREATE_TEST_DEV, so a raw device is
+      # initialised on its first run.
+      ./patches/xfstests-recreate-test-dev-bootstrap.patch
+      # check keeps each test's xunit testcase under its private $tmp until
+      # the section ends, so a guest that crashes mid-section loses the
+      # results of every test that finished. XUNIT_TESTCASES names a file to
+      # append them to instead, on storage that outlives the guest, so the
+      # run can resume with -E. Unset keeps upstream behaviour.
+      ./patches/xfstests-xunit-testcases.patch
+    ];
+
+    # The recipe replaces patchPhase wholesale and never applies `patches`;
+    # apply them here, as stdenv's own patchPhase would.
     #
     # The recipe rewrites every /bin/true to a bare `true`, which in xfs/031's
     # mkfs protofile is a file to copy in, so mkfs fails to open it and the
@@ -70,9 +76,9 @@ in
     # under its own libexec, where common/config's /usr/libexec fallback
     # cannot find it.
     patchPhase = (prevAttrs.patchPhase or "") + ''
-      patch -p1 < ${./patches/xfstests-runtime-max-sec.patch}
-      patch -p1 < ${./patches/xfstests-recreate-test-dev-bootstrap.patch}
-      patch -p1 < ${./patches/xfstests-xunit-testcases.patch}
+      for patch in $patches; do
+        patch -p1 < "$patch"
+      done
       substituteInPlace tests/xfs/031 --replace-fail ' 3 1 true' ' 3 1 ${prev.coreutils}/bin/true'
       substituteInPlace common/config \
         --replace-fail /usr/libexec/xfsprogs ${final.xfsprogs.out}/libexec/xfsprogs

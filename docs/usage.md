@@ -364,9 +364,10 @@ The `xfstests-src` input is a local source checkout declared as
 a flake input with `flake = false` (see the template for
 commented-out examples).
 
-The xfstests overlay applies its downstream patches in
-`patchPhase`, so a source that already carries one fails to patch.
-`overlays/xfstests/overlay.nix` names each patch and when it goes away.
+The xfstests overlay carries downstream patches in `patches`, so a
+source that already contains them fails to patch; set
+`patches = [ ];` in the same `overrideAttrs`, or filter the list.
+`overlays/xfstests/overlay.nix` says what each patch is for.
 
 ### Pinning a specific upstream commit
 
@@ -477,7 +478,7 @@ source tree, whether nixpkgs' or this flake's. The templates
 include a commented-out example for fio, which sets
 `patches = [];` for the reason given under
 [Pinning a specific upstream commit](#pinning-a-specific-upstream-commit),
-and an xfstests source meets the `patchPhase` caveat above.
+and an xfstests source meets the `patches` caveat above.
 
 `cpupower` here is this flake's package, built from the kernel
 tree's `tools/power/cpupower/`. Override its `src` with your kernel
