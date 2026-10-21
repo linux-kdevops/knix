@@ -8,9 +8,9 @@
 #
 # Usage in a flake:
 #   modules = [
-#     nixos-flake.nixosModules.backends.imageless     # or backends.libvirt
-#     nixos-flake.nixosModules.profiles.devel
-#     { nixpkgs.overlays = [ nixos-flake.overlays.default ]; }
+#     knix.nixosModules.backends.imageless     # or backends.libvirt
+#     knix.nixosModules.profiles.devel
+#     { nixpkgs.overlays = [ knix.overlays.default ]; }
 #   ];
 { pkgs, ... }:
 {

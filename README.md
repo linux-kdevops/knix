@@ -1,4 +1,4 @@
-# nixos-flake
+# knix
 
 NixOS modules, overlays, and templates for provisioning NixOS
 systems. The same module set drives several modes:
@@ -66,8 +66,8 @@ cat result/boot.json
 To create a downstream configuration, use a template:
 
 ```shell
-nix flake init --template "github:linux-kdevops/nixos-flake#imageless"
-nix flake init --template "github:linux-kdevops/nixos-flake#libvirt"
+nix flake init --template "github:linux-kdevops/knix#imageless"
+nix flake init --template "github:linux-kdevops/knix#libvirt"
 ```
 
 See [docs/usage.md](docs/usage.md) for customizing packages and

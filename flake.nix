@@ -8,7 +8,7 @@
 #   nix flake check                             # validate backends + checks
 #   nix build .#checks.x86_64-linux.imageless   # one backend closure
 #   nix develop .#build-kernel -c make ...      # kernel build env
-#   nix flake init -t github:linux-kdevops/nixos-flake
+#   nix flake init -t github:linux-kdevops/knix
 {
   description = "NixOS modules, overlays, and templates for provisioning NixOS systems";
 
@@ -353,7 +353,7 @@
                 self.nixosModules.profiles.monitoring
                 module
               ];
-              nixos-flake.monitoring.enable = true;
+              knix.monitoring.enable = true;
             })
           ) self.nixosModules.testSuites;
         in
@@ -368,7 +368,7 @@
               self.nixosModules.backends.libvirt
               self.nixosModules.profiles.controller
             ];
-            nixos-flake.controller.enable = true;
+            knix.controller.enable = true;
           };
           devel = buildBackend {
             imports = [
@@ -385,7 +385,7 @@
               self.nixosModules.backends.imageless
               self.nixosModules.profiles.telemetry
             ];
-            nixos-flake.telemetry = {
+            knix.telemetry = {
               enable = true;
               metrics.url = "http://192.0.2.1:9090/api/v1/write";
               logs.url = "http://192.0.2.1:3100/loki/api/v1/push";

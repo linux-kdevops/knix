@@ -13,7 +13,7 @@
 # layer.
 { config, lib, ... }:
 let
-  cfg = config.nixos-flake.user;
+  cfg = config.knix.user;
 in
 {
   imports = [ ./user-options.nix ];

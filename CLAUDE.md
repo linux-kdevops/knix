@@ -16,7 +16,7 @@ Directories, not files: the tree itself is the file list, and a copy
 of it here only falls behind.
 
 ```
-nixos-flake/
+knix/
 ├── flake.nix          nixosModules, overlays, templates, packages, checks, devShells
 ├── flake.lock         Pinned nixpkgs revision
 ├── lib/               Package sets shared between a profile and a devShell

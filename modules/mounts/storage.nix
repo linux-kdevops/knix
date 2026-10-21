@@ -20,7 +20,7 @@
   ...
 }:
 let
-  cfg = config.nixos-flake.storage;
+  cfg = config.knix.storage;
 
   mkFormatUnit = mountPoint: drive: {
     name = "format-${utils.escapeSystemdPath drive.device}";
@@ -51,7 +51,7 @@ let
   };
 in
 {
-  options.nixos-flake.storage = lib.mkOption {
+  options.knix.storage = lib.mkOption {
     default = { };
     description = "Extra block-device mounts, keyed by mount point.";
     type = lib.types.attrsOf (
@@ -108,7 +108,7 @@ in
     assertions = lib.mapAttrsToList (mountPoint: drive: {
       assertion = !(drive.autoFormat && drive.mkfsArgs != [ ]);
       message = ''
-        nixos-flake.storage."${mountPoint}": autoFormat and mkfsArgs
+        knix.storage."${mountPoint}": autoFormat and mkfsArgs
         are mutually exclusive. Pick one.
       '';
     }) cfg;

@@ -35,7 +35,7 @@
   ...
 }:
 let
-  cfg = config.nixos-flake.telemetry;
+  cfg = config.knix.telemetry;
 
   alloyConfig = ''
     prometheus.exporter.unix "node" {
@@ -92,7 +92,7 @@ let
   ebpfListen = "127.0.0.1:9435";
 in
 {
-  options.nixos-flake.telemetry = {
+  options.knix.telemetry = {
     enable = lib.mkEnableOption "continuous metrics and journal export";
 
     metrics.url = lib.mkOption {

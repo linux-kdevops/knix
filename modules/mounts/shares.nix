@@ -11,10 +11,10 @@
 # need them.
 { config, lib, ... }:
 let
-  cfg = config.nixos-flake.shares;
+  cfg = config.knix.shares;
 in
 {
-  options.nixos-flake.shares = lib.mkOption {
+  options.knix.shares = lib.mkOption {
     default = { };
     description = "Virtiofs shares to mount in the guest, keyed by mount point.";
     type = lib.types.attrsOf (

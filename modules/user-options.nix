@@ -8,7 +8,7 @@
 # of how many modules pull this in.
 { lib, ... }:
 {
-  options.nixos-flake.user = {
+  options.knix.user = {
     name = lib.mkOption {
       type = lib.types.str;
       default = "user";

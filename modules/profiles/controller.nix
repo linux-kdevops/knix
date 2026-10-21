@@ -16,11 +16,11 @@
   ...
 }:
 let
-  cfg = config.nixos-flake.controller;
+  cfg = config.knix.controller;
   tc = import ../../lib/toolchain.nix { inherit pkgs; };
 in
 {
-  options.nixos-flake.controller.enable = lib.mkEnableOption "the control-node environment";
+  options.knix.controller.enable = lib.mkEnableOption "the control-node environment";
 
   config = lib.mkIf cfg.enable {
     # Kernel/Kconfig toolchain + orchestration tools, shared with the build

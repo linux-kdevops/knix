@@ -7,7 +7,7 @@
 # needs wheel and kvm by default.
 #
 # The shared option schema in ../../user-options.nix makes
-# nixos-flake.user.extraGroups available even when modules/
+# knix.user.extraGroups available even when modules/
 # user.nix is not in the import set (e.g. the standalone
 # backend check builds the backend without the user module).
 #
@@ -17,7 +17,7 @@
 {
   imports = [ ../../user-options.nix ];
 
-  nixos-flake.user.extraGroups = lib.mkDefault [
+  knix.user.extraGroups = lib.mkDefault [
     "wheel"
     "kvm"
   ];

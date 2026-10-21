@@ -379,7 +379,7 @@ is activated, not how it is built.
 A controller is a host that provisions and drives the systems
 above rather than being one of them. The `controller` module
 (`modules/profiles/controller.nix`) is a profile, gated behind
-`nixos-flake.controller.enable`, that adds three things to a host.
+`knix.controller.enable`, that adds three things to a host.
 
 The first is the toolchain to build a Linux kernel and drive its
 Kconfig interface: the menuconfig frontend's ncurses dependency

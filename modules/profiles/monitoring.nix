@@ -8,7 +8,7 @@
 # (monitor-<name>@<run-id>.service); the orchestrator instantiates
 # each unit with the workload's run-id at start time, and systemd
 # substitutes the run-id wherever the unit references %i. Output
-# lands under nixos-flake.monitoring.outputDir, which is by default
+# lands under knix.monitoring.outputDir, which is by default
 # /var/lib/monitoring/runs/%i and which consumers typically back
 # with a virtiofs share or a block-device mount so the data ends
 # up on the host alongside the run's other artifacts.
@@ -73,7 +73,7 @@
   ...
 }:
 let
-  cfg = config.nixos-flake.monitoring;
+  cfg = config.knix.monitoring;
 
   governorSnapshot = pkgs.writeShellScript "monitor-cpu-governor-snapshot" ''
     set -eu
@@ -213,7 +213,7 @@ let
   ];
 in
 {
-  options.nixos-flake.monitoring = {
+  options.knix.monitoring = {
     enable = lib.mkEnableOption "test-run-bracketed system monitoring";
 
     outputDir = lib.mkOption {

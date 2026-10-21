@@ -27,7 +27,7 @@
   ...
 }:
 let
-  cfg = config.nixos-flake.kunit;
+  cfg = config.knix.kunit;
   documentation = [ "https://docs.kernel.org/dev-tools/kunit/run_manual.html" ];
   serviceCommon = {
     Type = "oneshot";
@@ -87,7 +87,7 @@ let
   };
 in
 {
-  options.nixos-flake.kunit = {
+  options.knix.kunit = {
     modules = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];

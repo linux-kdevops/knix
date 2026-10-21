@@ -39,7 +39,7 @@ to also cover `aarch64-linux` (needs an aarch64 builder).
 
 Why: step 2 builds the backends in isolation but not the templates the
 downstream consumer actually copies in with `nix flake init`. The
-templates have their own `flake.nix` with `inputs.nixos-flake.url`,
+templates have their own `flake.nix` with `inputs.knix.url`,
 and a regression in their composition surfaces only on an actual build.
 The libvirt template's qcow2 *disk image* is also assembled here —
 `make-disk-image.nix` is not exercised by step 2's libvirt closure
@@ -47,15 +47,15 @@ check.
 
 What: builds the imageless template's `toplevel` closure and the
 libvirt template's qcow2 against the local checkout, in both cases
-overriding the placeholder `path:/path/to/nixos-flake` input with the
+overriding the placeholder `path:/path/to/knix` input with the
 working tree.
 
 ```shell
 nix build "path:./templates/imageless#packages.x86_64-linux.toplevel" \
-  --override-input nixos-flake "path:$PWD"
+  --override-input knix "path:$PWD"
 
 nix build "path:./templates/libvirt#packages.x86_64-linux.image" \
-  --override-input nixos-flake "path:$PWD"
+  --override-input knix "path:$PWD"
 ```
 
 ## 4. Build the custom packages — when `pkgs/` or `overlays/` changed

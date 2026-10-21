@@ -1,6 +1,6 @@
 # Usage
 
-nixos-flake exports NixOS modules, overlays, and templates.
+knix exports NixOS modules, overlays, and templates.
 Downstream projects consume these as a flake input to build their
 own NixOS systems — the imageless backend yields a system closure
 consumed directly by QEMU + virtiofsd, and the libvirt backend
@@ -72,7 +72,7 @@ nix develop .#systemd -c systemctl --user list-units
 ## Creating a configuration
 
 A configuration is a standalone flake project: its own directory
-with a `flake.nix` that references nixos-flake as a flake input
+with a `flake.nix` that references knix as a flake input
 and imports its modules and overlays. Each configuration has its own
 `flake.lock` and `result` symlink. Multiple configurations can coexist
 independently.
@@ -99,11 +99,11 @@ nix flake init --template "path:$PWD/../.."
 `nix flake init` copies `templates/imageless/flake.nix` into the
 current directory. The copied file is independent of the template:
 future changes to the upstream template do not update your copy.
-The link between your configuration and nixos-flake is the
-`inputs.nixos-flake.url` flake input, not the template itself.
+The link between your configuration and knix is the
+`inputs.knix.url` flake input, not the template itself.
 
-Edit `flake.nix` and set `nixos-flake.url` to the absolute path of
-your nixos-flake checkout. The `path:` scheme does not expand `~`,
+Edit `flake.nix` and set `knix.url` to the absolute path of
+your knix checkout. The `path:` scheme does not expand `~`,
 use the full path or `$HOME`:
 
 ```shell
@@ -124,24 +124,24 @@ readlink --canonicalize result
 
 ### Writing a configuration from scratch
 
-The template is optional. Any flake that declares nixos-flake as an
+The template is optional. Any flake that declares knix as an
 input and imports its modules works as a configuration:
 
 ```nix
 {
   inputs = {
-    nixos-flake.url = "path:/home/user/src/nixos-flake";
-    nixpkgs.follows = "nixos-flake/nixpkgs";
+    knix.url = "path:/home/user/src/knix";
+    nixpkgs.follows = "knix/nixpkgs";
   };
 
-  outputs = { self, nixpkgs, nixos-flake, ... }: {
+  outputs = { self, nixpkgs, knix, ... }: {
     nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        nixos-flake.nixosModules.backends.imageless
-        nixos-flake.nixosModules.profiles.devel
+        knix.nixosModules.backends.imageless
+        knix.nixosModules.profiles.devel
         {
-          nixpkgs.overlays = [ nixos-flake.overlays.default ];
+          nixpkgs.overlays = [ knix.overlays.default ];
           environment.systemPackages = with nixpkgs.legacyPackages.x86_64-linux; [
             gdb
           ];
@@ -152,7 +152,7 @@ input and imports its modules works as a configuration:
 }
 ```
 
-`nixpkgs.follows = "nixos-flake/nixpkgs"` ensures both flakes use
+`nixpkgs.follows = "knix/nixpkgs"` ensures both flakes use
 the same nixpkgs revision. Without it, the configuration would
 pull a second copy of nixpkgs.
 
@@ -176,7 +176,7 @@ base NixOS system:
 - Firewall disabled, unnecessary services disabled
 
 It also auto-imports its sibling `user.nix`, which sets
-`nixos-flake.user.extraGroups` to `[ "wheel" "kvm" ]` at
+`knix.user.extraGroups` to `[ "wheel" "kvm" ]` at
 `lib.mkDefault` priority so the unprivileged account picks up
 the right groups when `nixosModules.user` is composed.
 
@@ -193,7 +193,7 @@ controller profile on top of this backend).
 
 `nixosModules.user` (`modules/user.nix`) adds an opt-in
 unprivileged account with passwordless sudo. The account name is
-parametric through `options.nixos-flake.user.name` (default
+parametric through `options.knix.user.name` (default
 `user`); consumers override it to their project name. The
 `extraGroups` option defaults to `[ ]` here; each backend ships a
 sibling user.nix that sets backend-appropriate defaults via
@@ -248,7 +248,7 @@ nix flake check
 be picked up on the next build.
 
 Downstream configurations that use `nixpkgs.follows` inherit
-the nixpkgs pin from nixos-flake. After updating nixos-flake, run
+the nixpkgs pin from knix. After updating knix, run
 `nix flake update` in each configuration to pick up the new pin.
 
 ## Overlays
@@ -268,7 +268,7 @@ the original. This means overrides compose: each `overrideAttrs`
 call wraps the previous derivation, replacing only the attributes
 it specifies.
 
-### What nixos-flake provides
+### What knix provides
 
 The `overlays/` directory customizes nixpkgs packages. Each file
 overrides one package. The default overlay (`overlays.default`)
@@ -284,25 +284,25 @@ Currently included:
 
 ### Overriding a package from a configuration
 
-A configuration lists overlays in order. nixos-flake's overlay
+A configuration lists overlays in order. knix's overlay
 goes first, then any user overlays that build on top of it.
 
 For example, xfstests goes through three layers:
 
 ```
 nixpkgs base                → xfstests 2023.05.14 (broken)
-nixos-flake.overlays.default → xfstests 2026.03.20 (bumped)
+knix.overlays.default → xfstests 2026.03.20 (bumped)
 user overlay                → xfstests from local checkout
 ```
 
 The user overlay's `prev.xfstests` is the xfstests from
-nixos-flake's overlay (the bumped version). `overrideAttrs`
+knix's overlay (the bumped version). `overrideAttrs`
 replaces only `src`, keeping everything else (build inputs,
 install phase, patches) from the previous layer:
 
 ```nix
 nixpkgs.overlays = [
-  nixos-flake.overlays.default
+  knix.overlays.default
   (final: prev: {
     xfstests = prev.xfstests.overrideAttrs {
       src = inputs.xfstests-src;
@@ -378,10 +378,10 @@ For projects hosted on GitHub, use `fetchFromGitHub`:
 
 Nix will fail with a hash mismatch on the first build and print
 the correct `hash` value to use. Clear `patches = [];` when the
-upstream source already includes fixes that nixos-flake's overlay
+upstream source already includes fixes that knix's overlay
 backports.
 
-The user never needs to modify nixos-flake's overlays. All
+The user never needs to modify knix's overlays. All
 customization happens in the configuration's own `flake.nix`.
 
 ## Building from local source
@@ -421,7 +421,7 @@ Changes to the local source directory are picked up on every
 
 This pattern works for any nixpkgs package. The template includes
 commented-out examples for fio and kmod. Clear `patches = [];`
-when the local source already includes fixes that the nixos-flake
+when the local source already includes fixes that the knix
 overlay backports.
 
 The following packages are supported by the devel module and can
@@ -484,9 +484,9 @@ environment.variables.XDG_CONFIG_DIRS = lib.mkForce "/etc/xdg-host:/etc/xdg";
 Or declare it through the shares module:
 
 ```nix
-imports = [ nixos-flake.nixosModules.mounts.shares ];
+imports = [ knix.nixosModules.mounts.shares ];
 
-nixos-flake.shares."/etc/xdg-host" = { tag = "xdg"; };
+knix.shares."/etc/xdg-host" = { tag = "xdg"; };
 
 environment.variables.XDG_CONFIG_HOME = "/etc/xdg-host";
 environment.variables.XDG_CONFIG_DIRS = lib.mkForce "/etc/xdg-host:/etc/xdg";
@@ -572,7 +572,7 @@ Add it as a flake input in the configuration:
 ```nix
 inputs.home-manager = {
   url = "github:nix-community/home-manager";
-  inputs.nixpkgs.follows = "nixos-flake/nixpkgs";
+  inputs.nixpkgs.follows = "knix/nixpkgs";
 };
 ```
 
@@ -653,9 +653,9 @@ module, leaving the overlay and prepare-root-overlay service in the
 consumer's module:
 
 ```nix
-imports = [ nixos-flake.nixosModules.mounts.shares ];
+imports = [ knix.nixosModules.mounts.shares ];
 
-nixos-flake.shares."/mnt/home" = { tag = "home"; options = [ "ro" ]; };
+knix.shares."/mnt/home" = { tag = "home"; options = [ "ro" ]; };
 
 # Overlay and prepare-root-overlay service as above.
 ```
@@ -727,9 +727,9 @@ pre-mount format oneshot guarded by `blkid --probe`; devices with
 format machinery; devices with neither are assumed pre-formatted:
 
 ```nix
-imports = [ nixos-flake.nixosModules.mounts.storage ];
+imports = [ knix.nixosModules.mounts.storage ];
 
-nixos-flake.storage = {
+knix.storage = {
   "/mnt/nvme0" = {
     device = "/dev/nvme0n1";
     fsType = "xfs";
@@ -758,10 +758,10 @@ backend and enable it:
 
 ```nix
 modules = [
-  nixos-flake.nixosModules.backends.libvirt
-  nixos-flake.nixosModules.profiles.controller
-  nixos-flake.nixosModules.user
-  { nixos-flake.controller.enable = true; }
+  knix.nixosModules.backends.libvirt
+  knix.nixosModules.profiles.controller
+  knix.nixosModules.user
+  { knix.controller.enable = true; }
 ];
 ```
 
@@ -799,4 +799,4 @@ configurations/
 
 Each configuration can import different modules, apply different
 overlays, and add different packages. All of them share the same
-nixos-flake base through the `inputs.nixos-flake.url` flake input.
+knix base through the `inputs.knix.url` flake input.
