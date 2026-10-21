@@ -8,7 +8,7 @@
 #   nix flake check                             # validate backends + checks
 #   nix build .#checks.x86_64-linux.imageless   # one backend closure
 #   nix develop .#build-kernel -c make ...      # kernel build env
-#   nix flake init -t github:linux-kdevops/knix
+#   nix flake init --template github:linux-kdevops/knix
 {
   description = "NixOS modules, overlays, and templates for provisioning NixOS systems";
 
