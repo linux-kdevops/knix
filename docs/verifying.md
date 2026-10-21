@@ -29,13 +29,14 @@ system. Also exercises every test-suite module composed on top of the
 imageless backend, the user account, and monitoring — the realistic
 shape a consumer deploys.
 
-What: evaluates every flake output and builds
-`checks.<system>.{imageless,libvirt,controller,imageless-<suite>}`
-— the three base closures and one closure per test-suite module. The
-first run builds them all; later runs are cached. imageless-kvcache
-carries nixos-unstable's torch and vLLM for the CPU, the longest of
-them on a cold store. Add `--all-systems`
-to also cover `aarch64-linux` (needs an aarch64 builder).
+What: evaluates every flake output and builds `checks.<system>`:
+the base closures (each backend, `controller`, `devel`, `telemetry`)
+and one `imageless-<suite>` closure per test-suite module. `gpu` is
+evaluated only, since the CUDA build it selects is too large for a
+check. The first run builds them all; later runs are cached.
+imageless-kvcache carries nixos-unstable's torch and vLLM for the
+CPU, the longest of them on a cold store. Add `--all-systems` to also
+cover `aarch64-linux` (needs an aarch64 builder).
 
 ## 3. Build the templates
 
