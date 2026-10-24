@@ -82,6 +82,15 @@
             # the guest's own profile resolves them the same way.
             ignoreCollisions = true;
           };
+      }
+      # With knix.nixosModules.profiles.fast-boot in default.nix, the
+      # initramfs that boots the closure without the systemd one; the
+      # profile's header has the kernel command line it takes. Without
+      # the profile there is no such output, rather than one that fails
+      # to evaluate.
+      # Run: nix build .#minimal-initrd
+      // nixpkgs.lib.optionalAttrs (self.nixosConfigurations.vm.config.system.build ? minimalInitrd) {
+        minimal-initrd = self.nixosConfigurations.vm.config.system.build.minimalInitrd;
       };
     };
 }
