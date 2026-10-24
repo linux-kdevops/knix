@@ -22,6 +22,11 @@
     patchelf
     cpio
     kmod
+    # scripts/Makefile.lib runs lzop, lz4 and zstd, under the names the
+    # top-level Makefile gives them, for the matching CONFIG_KERNEL_*
+    # compression; stdenv already brings gzip, bzip2 and xz.
+    lz4
+    lzop
     zstd
     rsync
     hostname
