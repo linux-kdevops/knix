@@ -268,6 +268,14 @@ passthrough. The kernel modules are built against that kernel from
 `nvidia-open-src`, the same driver release; `knix.gpu.cudaCapabilities`
 narrows the GPU generations CUDA compiles for.
 
+`nixosModules.profiles.fast-boot` (`modules/profiles/fast-boot.nix`)
+drops the first-boot work an imageless guest repeats on every boot
+on its way to an SSH login, and builds `system.build.minimalInitrd`,
+a BusyBox initramfs that boots the closure's `prepare-root` without
+the systemd initramfs (`nix build .#minimal-initrd` in the template).
+The module's header has the kernel command line it takes and the
+settings that belong there.
+
 `nixosModules.profiles.controller` is described under
 [Controller host](#controller-host).
 

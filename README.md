@@ -17,7 +17,8 @@ systems. The same module set drives several modes:
 
 All modes compose with the opt-in modules — `user`, the mounts
 modules (`shares`, `storage`), the profiles (`devel`,
-`build-tools`, `monitoring`, `telemetry`, `controller`, `gpu`), and
+`build-tools`, `monitoring`, `telemetry`, `controller`, `gpu`,
+`fast-boot`), and
 the per-suite modules under `testSuites.*` — so a system can be minimal or
 carry the full kernel and storage testing toolchain.
 

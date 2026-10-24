@@ -30,7 +30,8 @@ imageless backend, the user account, and monitoring — the realistic
 shape a consumer deploys.
 
 What: evaluates every flake output and builds `checks.<system>`:
-the base closures (each backend, `controller`, `devel`, `telemetry`)
+the base closures (each backend, `controller`, `devel`, `fast-boot`
+with its initramfs, `telemetry`)
 and one `imageless-<suite>` closure per test-suite module. `gpu` is
 evaluated only, since the CUDA build it selects is too large for a
 check. The first run builds them all; later runs are cached.

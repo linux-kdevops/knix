@@ -71,6 +71,7 @@
           build-tools = ./modules/profiles/build-tools.nix;
           controller = ./modules/profiles/controller.nix;
           devel = ./modules/profiles/devel.nix;
+          fast-boot = ./modules/profiles/fast-boot.nix;
           gpu = ./modules/profiles/gpu.nix;
           monitoring = ./modules/profiles/monitoring.nix;
           telemetry = ./modules/profiles/telemetry.nix;
@@ -411,6 +412,24 @@
               self.nixosModules.profiles.devel
             ];
           };
+          # The fast-boot closure, and the minimal initramfs that boots
+          # it in place of the systemd one; the closure does not carry
+          # the minimal initramfs, so the check builds it alongside.
+          fast-boot =
+            let
+              system' = nixpkgs.lib.nixosSystem {
+                inherit system;
+                modules = [
+                  self.nixosModules.backends.imageless
+                  self.nixosModules.profiles.fast-boot
+                  { nixpkgs.overlays = [ self.overlays.default ]; }
+                ];
+              };
+            in
+            nixpkgs.legacyPackages.${system}.linkFarm "fast-boot" {
+              toplevel = system'.config.system.build.toplevel;
+              initrd = system'.config.system.build.minimalInitrd;
+            };
           # Telemetry composed on the imageless backend with both
           # push endpoints set, the shape a monitored guest boots
           # with (the URLs are examples; the module takes them from
