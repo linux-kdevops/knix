@@ -19,7 +19,7 @@ of it here only falls behind.
 knix/
 ├── flake.nix          nixosModules, overlays, templates, packages, checks, devShells
 ├── flake.lock         Pinned nixpkgs revision
-├── lib/               Package sets shared between a profile and a devShell
+├── lib/               Shared package sets and the buildKernel builder
 ├── docs/              usage, design-decisions, verifying
 ├── modules/
 │   ├── backends/      One directory per backend: the module plus its user.nix defaults
@@ -139,7 +139,8 @@ plain English paragraphs.
 
 Prefix with the part of the flake the change touches: `flake:` for
 flake.nix, `modules:` or the specific module name for a module,
-`overlays:` for package overlays, `pkgs:` for custom packages,
+`overlays:` for package overlays, `pkgs:` for custom packages, `lib:`
+or the specific file name (`toolchain:`) for lib/,
 `templates:` for template changes, `docs:` for documentation in
 docs/, `README:` for README changes, `CLAUDE:` for this file. Use
 `tree:` for the rare change that genuinely spans the whole

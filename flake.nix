@@ -99,6 +99,13 @@
         user = ./modules/user.nix;
       };
 
+      # Builders that turn what a developer runs in the build shells into
+      # derivations, for a build that is reused from the store instead of
+      # repeated.
+      lib = {
+        buildKernel = pkgs: import ./lib/kernel.nix { inherit pkgs; };
+      };
+
       overlays = {
         default = nixpkgs.lib.composeExtensions self.overlays.unstable (import ./overlays);
         # pkgsUnstable: nixos-unstable under the same nixpkgs config as the
@@ -395,6 +402,20 @@
                 ];
               }).drvPath
           );
+          # The lib builders on nixpkgs' own sources, evaluated only, as
+          # a build takes minutes; evaluation still catches a nixpkgs
+          # update that renames or drops an argument or input they use.
+          lib-kernel =
+            let
+              pkgs = nixpkgs.legacyPackages.${system};
+            in
+            pkgs.writeText "lib-kernel-eval" (
+              builtins.unsafeDiscardStringContext
+                (self.lib.buildKernel pkgs {
+                  inherit (pkgs.linux) src version;
+                  configure = "make O=$B defconfig";
+                }).drvPath
+            );
           libvirt = buildBackend self.nixosModules.backends.libvirt;
           # The controller profile composes on top of a disk-booted
           # backend; build it against libvirt so the check exercises

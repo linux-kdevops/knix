@@ -34,7 +34,8 @@ the base closures (each backend, `controller`, `devel`, `fast-boot`
 with its initramfs, `telemetry`)
 and one `imageless-<suite>` closure per test-suite module. `gpu` is
 evaluated only, since the CUDA build it selects is too large for a
-check. The first run builds them all; later runs are cached.
+check, and so is `lib-kernel`, `lib.buildKernel` on nixpkgs' kernel
+source. The first run builds them all; later runs are cached.
 imageless-kvcache carries nixos-unstable's torch and vLLM for the
 CPU, the longest of them on a cold store. Add `--all-systems` to also
 cover `aarch64-linux` (needs an aarch64 builder).

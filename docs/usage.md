@@ -78,6 +78,33 @@ libabigail, Sphinx), `build-kselftests` and `build-usertests` build
 move build outputs between hosts. `flake.nix` states what each one
 adds and why.
 
+## Building a kernel as a derivation
+
+A build in a shell is incremental and stays in your build directory,
+where Nix never sees it. A build that runs unattended, from a release
+or a committed ref, gains more as a derivation: its store path is known
+before it builds, so a second build of the same inputs reuses the
+first, and one started while the first still runs waits for it.
+`lib.buildKernel` takes what you type in the shell:
+
+```nix
+kernel = knix.lib.buildKernel pkgs {
+  src = pkgs.fetchurl {
+    url = "https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.tar.xz";
+    hash = "...";
+  };
+  version = "7.3";
+  configure = ''
+    make O=$B defconfig kvm_guest.config
+    make O=$B olddefconfig
+  '';
+};
+```
+
+The kernel is nixpkgs' `linuxManualConfig`: `${kernel}/bzImage`, and
+the modules under `${kernel.modules}/lib/modules`. `lib/kernel.nix`
+says what each argument does.
+
 ## Creating a configuration
 
 A configuration is a standalone flake project: its own directory

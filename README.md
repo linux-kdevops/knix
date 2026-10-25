@@ -31,6 +31,10 @@ package set the `controller` profile installs, defined once in
 binaries, `transfer` for moving build outputs between hosts, and
 `systemd` for the host systemd control toolkit.
 
+`lib.buildKernel` runs what you type in `build-kernel` as a
+derivation, so an unattended build is reused from the store instead of
+repeated; [docs/usage.md](docs/usage.md) shows how.
+
 **License**: copyleft-next-0.3.1
 
 ## Prerequisites
