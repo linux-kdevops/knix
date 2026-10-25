@@ -99,11 +99,12 @@
         user = ./modules/user.nix;
       };
 
-      # Builders that turn what a developer runs in the build shells into
-      # derivations, for a build that is reused from the store instead of
-      # repeated.
+      # Builders that turn what a developer runs in the build-kernel and
+      # build-qemu shells into derivations, for a build that is reused
+      # from the store instead of repeated.
       lib = {
         buildKernel = pkgs: import ./lib/kernel.nix { inherit pkgs; };
+        buildQemu = pkgs: import ./lib/qemu.nix { inherit pkgs; };
       };
 
       overlays = {
@@ -414,6 +415,16 @@
                 (self.lib.buildKernel pkgs {
                   inherit (pkgs.linux) src version;
                   configure = "make O=$B defconfig";
+                }).drvPath
+            );
+          lib-qemu =
+            let
+              pkgs = nixpkgs.legacyPackages.${system};
+            in
+            pkgs.writeText "lib-qemu-eval" (
+              builtins.unsafeDiscardStringContext
+                (self.lib.buildQemu pkgs {
+                  inherit (pkgs.qemu) src version;
                 }).drvPath
             );
           libvirt = buildBackend self.nixosModules.backends.libvirt;

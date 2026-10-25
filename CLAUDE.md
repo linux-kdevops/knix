@@ -19,7 +19,7 @@ of it here only falls behind.
 knix/
 ├── flake.nix          nixosModules, overlays, templates, packages, checks, devShells
 ├── flake.lock         Pinned nixpkgs revision
-├── lib/               Shared package sets and the buildKernel builder
+├── lib/               Shared package sets and the buildKernel/buildQemu builders
 ├── docs/              usage, design-decisions, verifying
 ├── modules/
 │   ├── backends/      One directory per backend: the module plus its user.nix defaults

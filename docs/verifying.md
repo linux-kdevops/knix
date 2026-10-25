@@ -31,14 +31,14 @@ shape a consumer deploys.
 
 What: evaluates every flake output and builds `checks.<system>`:
 the base closures (each backend, `controller`, `devel`, `fast-boot`
-with its initramfs, `telemetry`)
-and one `imageless-<suite>` closure per test-suite module. `gpu` is
-evaluated only, since the CUDA build it selects is too large for a
-check, and so is `lib-kernel`, `lib.buildKernel` on nixpkgs' kernel
-source. The first run builds them all; later runs are cached.
-imageless-kvcache carries nixos-unstable's torch and vLLM for the
-CPU, the longest of them on a cold store. Add `--all-systems` to also
-cover `aarch64-linux` (needs an aarch64 builder).
+with its initramfs, `telemetry`) and one `imageless-<suite>` closure
+per test-suite module. `gpu` is evaluated only, since the CUDA build
+it selects is too large for a check, and so are `lib-kernel` and
+`lib-qemu`, the lib builders on nixpkgs' kernel and QEMU sources. The
+first run builds them all; later runs are cached. imageless-kvcache
+carries nixos-unstable's torch and vLLM for the CPU, the longest of
+them on a cold store. Add `--all-systems` to also cover `aarch64-linux`
+(needs an aarch64 builder).
 
 ## 3. Build the templates
 

@@ -78,14 +78,14 @@ libabigail, Sphinx), `build-kselftests` and `build-usertests` build
 move build outputs between hosts. `flake.nix` states what each one
 adds and why.
 
-## Building a kernel as a derivation
+## Building a kernel or QEMU as a derivation
 
 A build in a shell is incremental and stays in your build directory,
 where Nix never sees it. A build that runs unattended, from a release
 or a committed ref, gains more as a derivation: its store path is known
 before it builds, so a second build of the same inputs reuses the
 first, and one started while the first still runs waits for it.
-`lib.buildKernel` takes what you type in the shell:
+`lib.buildKernel` and `lib.buildQemu` take what you type in the shell:
 
 ```nix
 kernel = knix.lib.buildKernel pkgs {
@@ -99,11 +99,21 @@ kernel = knix.lib.buildKernel pkgs {
     make O=$B olddefconfig
   '';
 };
+
+qemu = knix.lib.buildQemu pkgs {
+  src = pkgs.fetchurl {
+    url = "https://download.qemu.org/qemu-11.1.2.tar.xz";
+    hash = "...";
+  };
+  version = "11.1.2";
+  configureFlags = [ "--target-list=x86_64-softmmu" "--enable-kvm" ];
+};
 ```
 
 The kernel is nixpkgs' `linuxManualConfig`: `${kernel}/bzImage`, and
-the modules under `${kernel.modules}/lib/modules`. `lib/kernel.nix`
-says what each argument does.
+the modules under `${kernel.modules}/lib/modules`. QEMU installs under
+its store path as `make install` does under `--prefix`.
+`lib/kernel.nix` and `lib/qemu.nix` say what each argument does.
 
 ## Creating a configuration
 
