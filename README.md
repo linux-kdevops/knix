@@ -64,8 +64,8 @@ readlink --canonicalize result
 ```
 
 The `result` symlink points to the system closure. For imageless,
-`result/boot.json` contains the `init` and `initrd` paths needed to
-configure QEMU:
+`result/init` and `result/initrd` are what QEMU boots, and
+`result/boot.json` names both:
 
 ```shell
 cat result/boot.json
@@ -122,8 +122,9 @@ root=tmpfs console=ttyS0,115200 console=hvc0 init=/nix/store/<hash>/init
 systemd in the initramfs reads the NixOS-generated fstab, mounts
 root (tmpfs), `/nix/store` (virtiofs tag `store`), and
 `/lib/modules` (virtiofs tag `modules`), then switch-roots into
-the system closure. The `init=` and `initrd` paths change on
-every rebuild and are available in `result/boot.json`.
+the system closure. The store paths behind `init=` and the initrd
+change on every rebuild; `result/init` and `result/initrd` follow
+them.
 
 ### Libvirt
 

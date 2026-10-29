@@ -61,10 +61,11 @@
       };
 
       packages.${system} = {
-        # System closure for the imageless VM. Its boot.json names the
-        # init for the kernel command line and the initrd for QEMU's
-        # -initrd; the kernel is the consumer's own. The closure
-        # itself is what virtiofsd serves to the guest as /nix/store.
+        # System closure for the imageless VM: result/init for the
+        # kernel command line, result/initrd for QEMU's -initrd
+        # (boot.json names both); the kernel is the consumer's own.
+        # The closure itself is what virtiofsd serves to the guest as
+        # /nix/store.
         # Run: nix build .#toplevel  (or .#packages.<system>.toplevel)
         toplevel = self.nixosConfigurations.vm.config.system.build.toplevel;
 

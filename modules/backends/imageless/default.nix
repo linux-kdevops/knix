@@ -111,8 +111,8 @@
   # under one gate. Five of them genuinely depend on NixOS
   # having built the kernel itself — system.build.kernel,
   # system.modulesTree, the system.systemBuilderCommands that
-  # symlink $out/kernel and $out/initrd, the kernel-side
-  # boot.kernelParams, hardware.firmware exposure. Two are
+  # symlink $out/kernel (not its $out/initrd link, lifted below),
+  # the kernel-side boot.kernelParams, hardware.firmware exposure. Two are
   # default-module hints (loop, atkbd) that aren't useful in a
   # VM. The remaining four are pure runtime mechanism and have
   # no dependency on the kernel package whatsoever:
@@ -166,6 +166,12 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig.SuccessExitStatus = "0 1";
   };
+
+  # The $out/initrd link, under the conditions nixpkgs gives it
+  # (docs/design-decisions.md, "External kernel").
+  system.systemBuilderCommands = lib.mkIf (!config.boot.kernel.enable && config.boot.initrd.enable) ''
+    ln -s ${config.system.build.initialRamdisk}/${config.system.boot.loader.initrdFile} $out/initrd
+  '';
 
   # Re-add the upstream-NixOS default kernelModules list that the
   # same boot.kernel.enable gate skips. Both `loop` and `atkbd` are

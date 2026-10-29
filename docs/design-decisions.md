@@ -207,6 +207,16 @@ does not set `boot.kernelParams` because no NixOS bootloader is
 active to enforce it. The QEMU configuration must include
 `root=tmpfs` and `init=<closure>/init` explicitly.
 
+The initramfs is still NixOS's, and `boot.json` names it, but
+nixpkgs links `$out/initrd` into the closure only inside its
+`mkIf config.boot.kernel.enable` block
+(nixos/modules/system/boot/kernel.nix), next to the kernel links.
+The imageless module adds that one link back, under
+`!boot.kernel.enable` and `boot.initrd.enable`, so `result/initrd`
+sits beside `result/init` after a single `nix build`. A module that
+turns the kernel back on gets nixpkgs' own link instead of a second
+`ln -s` that would fail.
+
 ## Minimal profile
 
 ```nix
