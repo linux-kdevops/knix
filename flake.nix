@@ -84,6 +84,7 @@
 
         testSuites = {
           blktests = ./modules/testSuites/blktests.nix;
+          fio = ./modules/testSuites/fio.nix;
           fstests = ./modules/testSuites/fstests.nix;
           gitr = ./modules/testSuites/gitr.nix;
           kunit = ./modules/testSuites/kunit.nix;

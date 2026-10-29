@@ -317,12 +317,12 @@ settings that belong there.
 [Controller host](#controller-host).
 
 `nixosModules.testSuites.<suite>` (`modules/testSuites/`) carries
-one module per suite: blktests, fstests, gitr, kunit, kvcache, ltp,
-mmtests, pynfs, selftests, sysbench and usertests. Each installs the
-userland its suite needs. The ones this flake can run declare
+one module per suite: blktests, fio, fstests, gitr, kunit, kvcache,
+ltp, mmtests, pynfs, selftests, sysbench and usertests. Each installs
+the userland its suite needs. The ones this flake can run declare
 systemd template units, one instance per unit of work:
-`xfstests@<section>`, `blktests@<group>`, `kunit@<suite>`,
-`kselftest@<collection>`, `usertests@<binary>` and
+`xfstests@<section>`, `blktests@<group>`, `fio@<job>`,
+`kunit@<suite>`, `kselftest@<collection>`, `usertests@<binary>` and
 `kvcache@<preset>`. Their
 configuration and results live on a directory the host shares in,
 so changing a run needs no rebuild; each module's header states its
